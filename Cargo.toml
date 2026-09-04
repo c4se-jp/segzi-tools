@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 rust-version = "1.98.1"
 license = "BSD-3-Clause"
-description = "Convert Japanese prose to seiji and seikana-zukai"
+description = "Convert Japanese prose to segzi and seg-kanazukahi"
 repository = "https://github.com/c4se-jp/segzi-tools"
 
 [[bin]]
