@@ -1,0 +1,16 @@
+{
+  "data_version": 1,
+  "source_skill": "seiji-seikana-converter",
+  "source_path": "wiki/.claude/skills/seiji-seikana-converter/data",
+  "ivs_policy": "never-introduce",
+  "files": {
+    "compound_replacements.tsv": "1503d454de7c5a232ca9bbe70218889ca9cac99b36b896bd4e22c4df8b78ae96",
+    "compound_replacements_bunka.tsv": "47c222dae6617073412bcbdd1a3ea11aa3b444ef3faa893f6d39959f856ea867",
+    "kana_patterns.tsv": "3c492c28fe929fbc5ab4b81c84e068b2eb7c211ec0620db0f6b01363ddf525f3",
+    "kana_replacements.tsv": "7ad6872364870ff01767b02ca9ebf265a7bbf35ff4f254443345b0f9069b709c",
+    "kyuji_map.json": "f6d4c1ffb57a214d37578acbc2182f34e5acdca2bffd90c1046144d58c2680e7",
+    "zh_ambiguous_characters.json": "b8ae0c78d33c18320bf494eae35123802e648f7732d32b2e1a042bc1833ed182",
+    "zh_char_map.tsv": "648c70f11f7f6bd90afd9bc09d5e36414b3047fd691a3bd7332cddafeed4693e",
+    "zh_compound_map.tsv": "8cc94da52cbbc4392cf0e577a77d474f76771413cd6a2cba294524969a599fb9"
+  }
+}
