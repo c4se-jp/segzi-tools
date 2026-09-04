@@ -18,10 +18,16 @@ fn run(args: impl IntoIterator<Item = String>) -> Result<(), String> {
 
     match args.next().as_deref() {
         None | Some("-h" | "--help") => {
+            if let Some(argument) = args.next() {
+                return Err(format!("unknown argument: {argument}\n\n{HELP}"));
+            }
             print!("{HELP}");
             Ok(())
         }
         Some("-V" | "--version") => {
+            if let Some(argument) = args.next() {
+                return Err(format!("unknown argument: {argument}\n\n{HELP}"));
+            }
             println!("segzify {}", env!("CARGO_PKG_VERSION"));
             Ok(())
         }
@@ -56,5 +62,10 @@ mod tests {
     #[test]
     fn rejects_unknown_arguments() {
         assert!(run(["segzify".into(), "--unknown".into()]).is_err());
+    }
+
+    #[test]
+    fn rejects_unknown_trailing_arguments() {
+        assert!(run(["segzify".into(), "--version".into(), "--typo".into()]).is_err());
     }
 }
