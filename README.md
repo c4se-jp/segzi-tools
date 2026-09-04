@@ -14,12 +14,6 @@ Translate between Japanese 正字 (a.k.a. 舊字, 旧字) and 俗字 (a.k.a. 新
 
 [textlint/](textlint/)
 
-## Segzify
-
-[segzify/](segzify/)
-
-俗字を正字に變換する library
-
 ## CONTRIBUTING
 
 [CONTRIBUTING](.github/CONTRIBUTING.md)

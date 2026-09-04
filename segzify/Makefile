@@ -1,2 +1,0 @@
-help:
-	./tasks.py help
