@@ -173,9 +173,11 @@ mod tests {
         let converter = Converter::embedded().unwrap();
         let (text, report) = converter.convert("证");
         assert_eq!(text, "証");
-        assert!(report
-            .unresolved_ambiguous_characters
-            .iter()
-            .any(|item| item.character == "証" && item.count == 1));
+        assert!(
+            report
+                .unresolved_ambiguous_characters
+                .iter()
+                .any(|item| item.character == "証" && item.count == 1)
+        );
     }
 }
