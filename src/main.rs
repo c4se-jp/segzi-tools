@@ -30,6 +30,10 @@ struct Args {
 }
 fn main() -> ExitCode {
     let args = Args::parse();
+    if args.check && args.output.is_some() {
+        eprintln!("--check と --output は併用できません");
+        return ExitCode::from(64);
+    }
     let input = match args.input {
         Some(path) => fs::read_to_string(path),
         None => {
@@ -38,19 +42,23 @@ fn main() -> ExitCode {
         }
     };
     let Ok(input) = input else {
+        eprintln!("inputを讀み込めません");
         return ExitCode::from(66);
     };
     let Ok(converter) = Converter::embedded() else {
+        eprintln!("變換dataを初期化できません");
         return ExitCode::from(70);
     };
     let (text, report) = converter.convert(&input);
     if !args.check {
         if let Some(path) = args.output {
             if fs::write(path, &text).is_err() {
+                eprintln!("outputを書き込めません");
                 return ExitCode::from(66);
             }
         } else {
             if io::stdout().write_all(text.as_bytes()).is_err() {
+                eprintln!("stdoutへ書き込めません");
                 return ExitCode::from(74);
             }
         }
@@ -63,6 +71,7 @@ fn main() -> ExitCode {
         };
         if let Some(path) = args.report_output {
             if fs::write(path, rendered).is_err() {
+                eprintln!("reportを書き込めません");
                 return ExitCode::from(74);
             }
         } else {
@@ -71,13 +80,13 @@ fn main() -> ExitCode {
             }
         }
     }
-    if args.check && text != input {
-        ExitCode::from(1)
-    } else if args.fail_on_unresolved
+    if args.fail_on_unresolved
         && (!report.unresolved_ambiguous_characters.is_empty()
             || !report.boundary_skipped_compound_replacements.is_empty())
     {
         ExitCode::from(2)
+    } else if args.check && text != input {
+        ExitCode::from(1)
     } else {
         ExitCode::SUCCESS
     }
