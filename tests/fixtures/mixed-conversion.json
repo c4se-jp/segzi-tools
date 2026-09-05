@@ -1,0 +1,25 @@
+{
+  "input": "きょうという日は待っているようです。弁護士が回復について総合的に判断した。提案分布を案分する。删除制造干后。\n",
+  "output": "けふといふ日は待ってゐるやうです。辯護士が恢復について綜合的に判斷した。提案分布を按分する。削除製造干后。\n",
+  "report": {
+    "unresolved_ambiguous_characters": [
+      {
+        "character": "后",
+        "count": 1,
+        "candidates": ["後", "后"]
+      },
+      {
+        "character": "干",
+        "count": 1,
+        "candidates": ["乾", "幹"]
+      }
+    ],
+    "boundary_skipped_compound_replacements": [
+      {
+        "source": "案分",
+        "target": "按分",
+        "count": 1
+      }
+    ]
+  }
+}
