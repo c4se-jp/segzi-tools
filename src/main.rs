@@ -2,7 +2,7 @@ use clap::{Parser, ValueEnum};
 use segzify::Converter;
 use std::{
     fs,
-    io::{self, Read},
+    io::{self, Read, Write},
     path::PathBuf,
     process::ExitCode,
 };
@@ -14,7 +14,7 @@ enum ReportFormat {
     None,
 }
 #[derive(Parser)]
-#[command(name = "segzify")]
+#[command(name = "segzify", version)]
 struct Args {
     input: Option<PathBuf>,
     #[arg(short, long)]
@@ -44,16 +44,15 @@ fn main() -> ExitCode {
         return ExitCode::from(70);
     };
     let (text, report) = converter.convert(&input);
-    if args.check && text != input {
-        return ExitCode::from(1);
-    }
     if !args.check {
         if let Some(path) = args.output {
-            if fs::write(path, text).is_err() {
+            if fs::write(path, &text).is_err() {
                 return ExitCode::from(66);
             }
         } else {
-            print!("{text}");
+            if io::stdout().write_all(text.as_bytes()).is_err() {
+                return ExitCode::from(66);
+            }
         }
     }
     if !matches!(args.report, ReportFormat::None) {
@@ -67,10 +66,14 @@ fn main() -> ExitCode {
                 return ExitCode::from(66);
             }
         } else {
-            eprint!("{rendered}");
+            if io::stderr().write_all(rendered.as_bytes()).is_err() {
+                return ExitCode::from(66);
+            }
         }
     }
-    if args.fail_on_unresolved
+    if args.check && text != input {
+        ExitCode::from(1)
+    } else if args.fail_on_unresolved
         && (!report.unresolved_ambiguous_characters.is_empty()
             || !report.boundary_skipped_compound_replacements.is_empty())
     {
