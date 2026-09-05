@@ -126,11 +126,7 @@ impl Converter {
             .ambiguous
             .iter()
             .filter_map(|(character, candidates)| {
-                let count = source
-                    .chars()
-                    .filter(|c| c == character)
-                    .count()
-                    .min(text.chars().filter(|c| c == character).count());
+                let count = text.chars().filter(|c| c == character).count();
                 (count > 0).then(|| AmbiguousCharacter {
                     character: character.to_string(),
                     count,
@@ -170,5 +166,16 @@ mod tests {
             converter.convert("きょうという日は待っているようです。删除制造干后。");
         assert_eq!(text, "けふといふ日は待ってゐるやうです。削除製造干后。");
         assert_eq!(report.unresolved_ambiguous_characters.len(), 2);
+    }
+
+    #[test]
+    fn reports_ambiguity_created_by_chinese_character_conversion() {
+        let converter = Converter::embedded().unwrap();
+        let (text, report) = converter.convert("证");
+        assert_eq!(text, "証");
+        assert!(report
+            .unresolved_ambiguous_characters
+            .iter()
+            .any(|item| item.character == "証" && item.count == 1));
     }
 }
