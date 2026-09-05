@@ -1,71 +1,81 @@
-use std::env;
-use std::process::ExitCode;
+use clap::{Parser, ValueEnum};
+use segzify::Converter;
+use std::{
+    fs,
+    io::{self, Read},
+    path::PathBuf,
+    process::ExitCode,
+};
 
-const HELP: &str = "\
-segzify — 正字正かなづかひ變換CLI
-
-Usage:
-  segzify [OPTIONS]
-
-Options:
-  -h, --help     このhelpを表示する
-  -V, --version  versionを表示する
-";
-
-fn run(args: impl IntoIterator<Item = String>) -> Result<(), String> {
-    let mut args = args.into_iter();
-    let _program = args.next();
-
-    match args.next().as_deref() {
-        None | Some("-h" | "--help") => {
-            if let Some(argument) = args.next() {
-                return Err(format!("unknown argument: {argument}\n\n{HELP}"));
-            }
-            print!("{HELP}");
-            Ok(())
-        }
-        Some("-V" | "--version") => {
-            if let Some(argument) = args.next() {
-                return Err(format!("unknown argument: {argument}\n\n{HELP}"));
-            }
-            println!("segzify {}", env!("CARGO_PKG_VERSION"));
-            Ok(())
-        }
-        Some(argument) => Err(format!("unknown argument: {argument}\n\n{HELP}")),
-    }
+#[derive(Clone, ValueEnum)]
+enum ReportFormat {
+    Text,
+    Json,
+    None,
 }
-
+#[derive(Parser)]
+#[command(name = "segzify")]
+struct Args {
+    input: Option<PathBuf>,
+    #[arg(short, long)]
+    output: Option<PathBuf>,
+    #[arg(long, value_enum, default_value = "text")]
+    report: ReportFormat,
+    #[arg(long)]
+    report_output: Option<PathBuf>,
+    #[arg(long)]
+    check: bool,
+    #[arg(long)]
+    fail_on_unresolved: bool,
+}
 fn main() -> ExitCode {
-    match run(env::args()) {
-        Ok(()) => ExitCode::SUCCESS,
-        Err(message) => {
-            eprint!("{message}");
-            ExitCode::from(64)
+    let args = Args::parse();
+    let input = match args.input {
+        Some(path) => fs::read_to_string(path),
+        None => {
+            let mut s = String::new();
+            io::stdin().read_to_string(&mut s).map(|_| s)
+        }
+    };
+    let Ok(input) = input else {
+        return ExitCode::from(66);
+    };
+    let Ok(converter) = Converter::embedded() else {
+        return ExitCode::from(70);
+    };
+    let (text, report) = converter.convert(&input);
+    if args.check && text != input {
+        return ExitCode::from(1);
+    }
+    if !args.check {
+        if let Some(path) = args.output {
+            if fs::write(path, text).is_err() {
+                return ExitCode::from(66);
+            }
+        } else {
+            print!("{text}");
         }
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::run;
-
-    #[test]
-    fn accepts_help() {
-        assert!(run(["segzify".into(), "--help".into()]).is_ok());
+    if !matches!(args.report, ReportFormat::None) {
+        let rendered = match args.report {
+            ReportFormat::Json => serde_json::to_string_pretty(&report).unwrap() + "\n",
+            ReportFormat::Text => format!("{report:#?}\n"),
+            ReportFormat::None => String::new(),
+        };
+        if let Some(path) = args.report_output {
+            if fs::write(path, rendered).is_err() {
+                return ExitCode::from(66);
+            }
+        } else {
+            eprint!("{rendered}");
+        }
     }
-
-    #[test]
-    fn accepts_version() {
-        assert!(run(["segzify".into(), "--version".into()]).is_ok());
-    }
-
-    #[test]
-    fn rejects_unknown_arguments() {
-        assert!(run(["segzify".into(), "--unknown".into()]).is_err());
-    }
-
-    #[test]
-    fn rejects_unknown_trailing_arguments() {
-        assert!(run(["segzify".into(), "--version".into(), "--typo".into()]).is_err());
+    if args.fail_on_unresolved
+        && (!report.unresolved_ambiguous_characters.is_empty()
+            || !report.boundary_skipped_compound_replacements.is_empty())
+    {
+        ExitCode::from(2)
+    } else {
+        ExitCode::SUCCESS
     }
 }

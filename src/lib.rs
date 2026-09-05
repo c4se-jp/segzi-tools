@@ -1,6 +1,6 @@
 use lindera::{dictionary::load_dictionary, mode::Mode, segmenter::Segmenter};
 use regex::Regex;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::collections::BTreeMap;
 
@@ -15,19 +15,19 @@ struct Candidate {
     target: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct AmbiguousCharacter {
     pub character: String,
     pub count: usize,
     pub candidates: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize)]
 pub struct Report {
     pub unresolved_ambiguous_characters: Vec<AmbiguousCharacter>,
     pub boundary_skipped_compound_replacements: Vec<CompoundReplacement>,
 }
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct CompoundReplacement {
     pub source: String,
     pub target: String,
