@@ -51,7 +51,7 @@ fn main() -> ExitCode {
             }
         } else {
             if io::stdout().write_all(text.as_bytes()).is_err() {
-                return ExitCode::from(66);
+                return ExitCode::from(74);
             }
         }
     }
@@ -63,11 +63,11 @@ fn main() -> ExitCode {
         };
         if let Some(path) = args.report_output {
             if fs::write(path, rendered).is_err() {
-                return ExitCode::from(66);
+                return ExitCode::from(74);
             }
         } else {
             if io::stderr().write_all(rendered.as_bytes()).is_err() {
-                return ExitCode::from(66);
+                return ExitCode::from(74);
             }
         }
     }
