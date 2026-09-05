@@ -63,12 +63,12 @@ fn main() -> ExitCode {
             }
         }
     }
-    if !matches!(args.report, ReportFormat::None) {
-        let rendered = match args.report {
-            ReportFormat::Json => serde_json::to_string_pretty(&report).unwrap() + "\n",
-            ReportFormat::Text => format!("{report:#?}\n"),
-            ReportFormat::None => String::new(),
-        };
+    let rendered = match args.report {
+        ReportFormat::Json => Some(serde_json::to_string_pretty(&report).unwrap() + "\n"),
+        ReportFormat::Text => Some(format!("{report:#?}\n")),
+        ReportFormat::None => None,
+    };
+    if let Some(rendered) = rendered {
         if let Some(path) = args.report_output {
             if fs::write(path, rendered).is_err() {
                 eprintln!("reportを書き込めません");
