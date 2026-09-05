@@ -3,7 +3,7 @@ use serde::Deserialize;
 use std::collections::BTreeMap;
 
 #[derive(Debug, Deserialize)]
-struct KyujiMap {
+struct SegziMap {
     char_map: BTreeMap<String, String>,
     ambiguous_characters: BTreeMap<String, Vec<Candidate>>,
 }
@@ -64,10 +64,10 @@ fn char_map(rows: Vec<(String, String)>) -> BTreeMap<char, String> {
 
 impl Converter {
     pub fn embedded() -> Result<Self, String> {
-        let kyuji: KyujiMap = serde_json::from_str(include_str!("../dic/kyuji_map.json"))
+        let segzi: SegziMap = serde_json::from_str(include_str!("../dic/kyuji_map.json"))
             .map_err(|error| error.to_string())?;
         let mut ambiguous = BTreeMap::new();
-        for (source, candidates) in kyuji.ambiguous_characters {
+        for (source, candidates) in segzi.ambiguous_characters {
             if let Some(character) = source.chars().next() {
                 ambiguous.insert(
                     character,
@@ -95,7 +95,7 @@ impl Converter {
         Ok(Self {
             zh_compounds: replacement_rows(include_str!("../dic/zh_compound_map.tsv")),
             zh_chars: char_map(rows(include_str!("../dic/zh_char_map.tsv"))),
-            chars: char_map(kyuji.char_map.into_iter().collect()),
+            chars: char_map(segzi.char_map.into_iter().collect()),
             kana: rows(include_str!("../dic/kana_replacements.tsv")),
             patterns: rows(include_str!("../dic/kana_patterns.tsv"))
                 .into_iter()
