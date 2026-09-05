@@ -138,9 +138,9 @@ impl Converter {
             text = text.replace(from, to);
         }
         text = translate(&text, &self.zh_chars);
-        let boundaries = self.boundaries(&text);
-        let mut skipped = Vec::new();
+        let mut skipped = BTreeMap::new();
         for (source, target) in &self.compounds {
+            let boundaries = self.boundaries(&text);
             let mut pieces = Vec::new();
             let mut last = 0;
             let mut start = text.find(source);
@@ -151,11 +151,7 @@ impl Converter {
                     pieces.push(target);
                     last = end;
                 } else {
-                    skipped.push(CompoundReplacement {
-                        source: source.clone(),
-                        target: target.clone(),
-                        count: 1,
-                    });
+                    *skipped.entry((source.clone(), target.clone())).or_insert(0) += 1;
                 }
                 start = text[end..].find(source).map(|next| end + next);
             }
@@ -189,7 +185,14 @@ impl Converter {
             text,
             Report {
                 unresolved_ambiguous_characters,
-                boundary_skipped_compound_replacements: skipped,
+                boundary_skipped_compound_replacements: skipped
+                    .into_iter()
+                    .map(|((source, target), count)| CompoundReplacement {
+                        source,
+                        target,
+                        count,
+                    })
+                    .collect(),
             },
         )
     }
@@ -246,13 +249,13 @@ mod tests {
     #[test]
     fn skips_compound_inside_another_word() {
         let converter = Converter::embedded().unwrap();
-        let (text, report) = converter.convert("提案分布");
-        assert_eq!(text, "提案分布");
+        let (text, report) = converter.convert("提案分布。提案分布");
+        assert_eq!(text, "提案分布。提案分布");
         assert!(
             report
                 .boundary_skipped_compound_replacements
                 .iter()
-                .any(|item| item.source == "案分" && item.target == "按分")
+                .any(|item| item.source == "案分" && item.target == "按分" && item.count == 2)
         );
     }
 }
