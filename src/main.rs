@@ -54,7 +54,7 @@ fn main() -> ExitCode {
         if let Some(path) = args.output {
             if fs::write(path, &text).is_err() {
                 eprintln!("outputを書き込めません");
-                return ExitCode::from(66);
+                return ExitCode::from(74);
             }
         } else {
             if io::stdout().write_all(text.as_bytes()).is_err() {
