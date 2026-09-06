@@ -5,6 +5,13 @@ name: on pull_request
   pull_request:
 
 jobs:
+  lint-gha:
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: write
+    uses: ./.github/workflows/wf-lint-gha.yaml # zizmor: ignore[self-repository]
+
   test:
     name: Test
     permissions:
