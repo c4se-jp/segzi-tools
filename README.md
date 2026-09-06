@@ -7,7 +7,7 @@
 ## segzify
 
 `segzify` は日本語の文章を正字・正かなづかひへ變換するcommand-line toolです。
-辭書は實行檔に埋込まれるため、導入後に別途の辭書dataは要りません。
+辭書は實行fileに埋込まれるため、導入後に別途の辭書dataは要りません。
 
 ### 導入
 
@@ -23,7 +23,7 @@ cloneしたworking treeからinstallする場合:
 cargo install --path . --locked
 ```
 
-source packageに含めるfilesとrelease版實行檔の容量を測定する方法は
+source packageに含めるfilesとrelease版實行fileの容量を測定する方法は
 [配布と資源計測](docs/distribution.md)を參照してください。
 
 ### 使用法

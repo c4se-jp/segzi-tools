@@ -19,9 +19,9 @@ registryへ公開するまでは、利用者はREADMEに示すGit repositoryま�
 `cargo install` する。platform別のprebuilt binaryや自動publishは、このrepositoryでは
 まだ提供しない。
 
-## 實行檔容量
+## 實行file容量
 
-`segzify` はUniDicと變換dataを埋込むため、release版實行檔容量を配布資源の基準値とする。
+`segzify` はUniDicと變換dataを埋込むため、release版實行file容量を配布資源の基準値とする。
 次のcommandはlocked dependenciesでrelease buildを作成し、論理容量をbyte單位で表示する。
 
 ```sh
