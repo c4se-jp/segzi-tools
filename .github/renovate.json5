@@ -1,0 +1,25 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [":configMigration", "config:recommended"],
+
+  dependencyDashboard: true,
+  labels: ["dependencies"],
+  minimumReleaseAge: "5 days",
+  schedule: "after 10am and before 7pm every weekday",
+  timezone: "Asia/Tokyo",
+
+  // 通常のpatch releaseに對するPRは作成しない。脆弱性alertはRenovateが別に扱ひ、以下で有效のままとする。
+  packageRules: [
+    {
+      description: "Ignore non-security patch updates",
+      enabled: false,
+      matchUpdateTypes: ["patch"],
+    },
+  ],
+
+  // GitHub AdvisoryとOSVの兩方を用ゐ、通常のpatch更新を無效にしてもsecurity fixを作成する。
+  osvVulnerabilityAlerts: true,
+  vulnerabilityAlerts: {
+    labels: ["dependencies", "security"],
+  },
+}
