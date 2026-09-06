@@ -39,6 +39,7 @@ pub struct Converter {
     compounds: Vec<(String, String)>,
     zh_chars: BTreeMap<char, String>,
     chars: BTreeMap<char, String>,
+    segmentation_chars: BTreeMap<char, char>,
     kana: Vec<(String, String)>,
     patterns: Vec<(Regex, String)>,
     ambiguous: BTreeMap<char, Vec<String>>,
@@ -73,6 +74,26 @@ fn char_map(rows: Vec<(String, String)>) -> BTreeMap<char, String> {
         .collect()
 }
 
+fn inverse_unique_char_map(map: &BTreeMap<char, String>) -> BTreeMap<char, char> {
+    let mut inverse = BTreeMap::new();
+    for (from, to) in map {
+        if let Some(to) = (to.chars().count() == 1).then(|| to.chars().next().unwrap()) {
+            match inverse.entry(to) {
+                std::collections::btree_map::Entry::Vacant(entry) => {
+                    entry.insert(Some(*from));
+                }
+                std::collections::btree_map::Entry::Occupied(mut entry) => {
+                    entry.insert(None);
+                }
+            }
+        }
+    }
+    inverse
+        .into_iter()
+        .filter_map(|(to, from)| from.map(|from| (to, from)))
+        .collect()
+}
+
 impl Converter {
     pub fn embedded() -> Result<Self, String> {
         let segzi: SegziMap = serde_json::from_str(include_str!("../dic/kyuji_map.json"))
@@ -103,6 +124,7 @@ impl Converter {
                 );
             }
         }
+        let chars = char_map(segzi.char_map.into_iter().collect());
         Ok(Self {
             zh_compounds: replacement_rows(include_str!("../dic/zh_compound_map.tsv")),
             compounds: {
@@ -113,7 +135,8 @@ impl Converter {
                 rows
             },
             zh_chars: char_map(rows(include_str!("../dic/zh_char_map.tsv"))),
-            chars: char_map(segzi.char_map.into_iter().collect()),
+            segmentation_chars: inverse_unique_char_map(&chars),
+            chars,
             kana: rows(include_str!("../dic/kana_replacements.tsv")),
             patterns: rows(include_str!("../dic/kana_patterns.tsv"))
                 .into_iter()
@@ -199,11 +222,24 @@ impl Converter {
     fn boundaries(&self, text: &str) -> std::collections::BTreeSet<usize> {
         let mut boundaries: std::collections::BTreeSet<usize> =
             [0, text.len()].into_iter().collect();
-        if let Ok(tokens) = self.segmenter.segment(Cow::Borrowed(text)) {
-            let mut offset = 0;
+        let mut segmentation_text = String::with_capacity(text.len());
+        let mut source_offsets = BTreeMap::from([(0, 0)]);
+        let mut source_offset = 0;
+        for character in text.chars() {
+            segmentation_text.push(
+                self.segmentation_chars
+                    .get(&character)
+                    .copied()
+                    .unwrap_or(character),
+            );
+            source_offset += character.len_utf8();
+            source_offsets.insert(segmentation_text.len(), source_offset);
+        }
+        if let Ok(tokens) = self.segmenter.segment(Cow::Borrowed(&segmentation_text)) {
             for token in tokens {
-                offset += token.surface.len();
-                boundaries.insert(offset);
+                if let Some(source_offset) = source_offsets.get(&token.byte_end) {
+                    boundaries.insert(*source_offset);
+                }
             }
         }
         boundaries
@@ -256,6 +292,23 @@ mod tests {
                 .boundary_skipped_compound_replacements
                 .iter()
                 .any(|item| item.source == "案分" && item.target == "按分" && item.count == 2)
+        );
+    }
+
+    #[test]
+    fn converts_compounds_at_boundaries_after_old_character_normalization() {
+        let converter = Converter::embedded().unwrap();
+        let (text, report) = converter.convert(include_str!(
+            "../docs/adr-0002-github-actions-workflow-design.md"
+        ));
+        assert!(text.contains("檢證"));
+        assert!(text.contains("初囘實行"));
+        assert!(text.contains("餘裕"));
+        assert!(
+            !report
+                .boundary_skipped_compound_replacements
+                .iter()
+                .any(|item| ["檢証", "初回", "余裕"].contains(&item.source.as_str()))
         );
     }
 }
