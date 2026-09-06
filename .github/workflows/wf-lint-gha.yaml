@@ -3,6 +3,11 @@ name: Lint GitHub Actions
 
 "on":
   workflow_call:
+    inputs:
+      reporter:
+        description: reviewdogのreporter
+        required: true
+        type: string
 
 jobs:
   lint-gha-reviewdog:
@@ -23,3 +28,4 @@ jobs:
         with:
           fail_on_error: true
           github_token: ${{github.token}}
+          reporter: ${{ inputs.reporter }}
