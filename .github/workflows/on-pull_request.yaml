@@ -17,7 +17,15 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-      - name: Rust 1.98.1 をインストール
-        run: rustup toolchain install 1.98.1 --profile minimal
+      - name: Cargo.toml からRustの版を取得
+        run: |
+          rust_version="$(cargo metadata --no-deps --format-version=1 |
+            jq -er --arg manifest_path "$GITHUB_WORKSPACE/Cargo.toml" \
+              '.packages[] |
+              select(.manifest_path == $manifest_path) |
+              .rust_version')"
+          printf 'RUST_VERSION=%s\n' "$rust_version" >> "$GITHUB_ENV"
+      - name: Rustをインストール
+        run: rustup toolchain install "$RUST_VERSION" --profile minimal
       - name: テストを実行
-        run: cargo +1.98.1 test --locked
+        run: cargo +"$RUST_VERSION" test --locked
