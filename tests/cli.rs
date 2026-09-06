@@ -19,3 +19,9 @@ fn rejects_check_with_output() {
         .unwrap();
     assert_eq!(output.status.code(), Some(64));
 }
+
+#[test]
+fn rejects_unknown_arguments_with_usage_status() {
+    let output = command().arg("--bogus").output().unwrap();
+    assert_eq!(output.status.code(), Some(64));
+}

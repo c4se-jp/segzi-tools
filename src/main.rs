@@ -1,4 +1,4 @@
-use clap::{Parser, ValueEnum};
+use clap::{Parser, ValueEnum, error::ErrorKind};
 use segzify::Converter;
 use std::{
     fs,
@@ -29,7 +29,17 @@ struct Args {
     fail_on_unresolved: bool,
 }
 fn main() -> ExitCode {
-    let args = Args::parse();
+    let args = match Args::try_parse() {
+        Ok(args) => args,
+        Err(error) => {
+            let success = matches!(
+                error.kind(),
+                ErrorKind::DisplayHelp | ErrorKind::DisplayVersion
+            );
+            let _ = error.print();
+            return ExitCode::from(if success { 0 } else { 64 });
+        }
+    };
     if args.check && args.output.is_some() {
         eprintln!("--check と --output は併用できません");
         return ExitCode::from(64);
@@ -80,14 +90,15 @@ fn main() -> ExitCode {
             }
         }
     }
+    let mut status = 0;
+    if args.check && text != input {
+        status |= 1;
+    }
     if args.fail_on_unresolved
         && (!report.unresolved_ambiguous_characters.is_empty()
             || !report.boundary_skipped_compound_replacements.is_empty())
     {
-        ExitCode::from(2)
-    } else if args.check && text != input {
-        ExitCode::from(1)
-    } else {
-        ExitCode::SUCCESS
+        status |= 2;
     }
+    ExitCode::from(status)
 }
