@@ -5,7 +5,7 @@
 
 ## Context
 
-舊`segzify/`にはPython、Node.js、InDesign向けの複數實裝と個別の依存・辭書があり、同じ變換を再現・配布する境界が明確でなかった。正字・正かなづかひへの變換は、熟語、字、かな、patternの順序と、語境界・曖昧字の扱いを一貫して保つ必要がある。
+舊`segzify/`にはPython、Node.js、InDesign向けの複數實裝と個別の依存・辭書があり、同じ變換を再現・配布する境界が明確でなかった。正字・正かなづかひへの變換は、熟語、字、かな、patternの順序と、語境界・曖昧字の扱ひを一貫して保つ必要がある。
 
 ## Decision
 
@@ -19,7 +19,7 @@
 
 - 利用者はRust toolchainだけで同一のCLIをbuild・installでき、辭書dataを別途管理しない。
 - 埋込みUniDicによりrelease實行fileは大きくなるため、容量をrelease時の確認項目とする。
-- reportを無視しても變換はできるが、嚴密な處理では`--fail-on-unresolved`を使う必要がある。
+- reportを無視しても變換はできるが、嚴密な處理では`--fail-on-unresolved`を使ふ必要がある。
 - crate registry公開とplatform別prebuilt binaryは、この決定の範圍外であり、必要になった時點で別ADRで扱ふ。
 
 ## Alternatives considered
