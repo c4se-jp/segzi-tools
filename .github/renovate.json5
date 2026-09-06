@@ -8,8 +8,7 @@
   schedule: "after 10am and before 7pm every weekday",
   timezone: "Asia/Tokyo",
 
-  // Keep routine patch releases out of PRs. Vulnerability alerts are handled
-  // independently by Renovate and remain enabled below.
+  // 通常のpatch releaseに對するPRは作成しない。脆弱性alertはRenovateが別に扱ひ、以下で有效のままとする。
   packageRules: [
     {
       description: "Ignore non-security patch updates",
@@ -18,8 +17,7 @@
     },
   ],
 
-  // Use both GitHub Advisory and OSV data so security fixes, including patch
-  // releases, are raised even when routine patch updates are disabled.
+  // GitHub AdvisoryとOSVの兩方を用ゐ、通常のpatch更新を無效にしてもsecurity fixを作成する。
   osvVulnerabilityAlerts: true,
   vulnerabilityAlerts: {
     labels: ["dependencies", "security"],
