@@ -1,71 +1,97 @@
-use std::env;
-use std::process::ExitCode;
+use clap::{Parser, ValueEnum, error::ErrorKind};
+use segzify::Converter;
+use std::{
+    fs,
+    io::{self, Read, Write},
+    path::PathBuf,
+    process::ExitCode,
+};
 
-const HELP: &str = "\
-segzify — 正字正かなづかひ變換CLI
-
-Usage:
-  segzify [OPTIONS]
-
-Options:
-  -h, --help     このhelpを表示する
-  -V, --version  versionを表示する
-";
-
-fn run(args: impl IntoIterator<Item = String>) -> Result<(), String> {
-    let mut args = args.into_iter();
-    let _program = args.next();
-
-    match args.next().as_deref() {
-        None | Some("-h" | "--help") => {
-            if let Some(argument) = args.next() {
-                return Err(format!("unknown argument: {argument}\n\n{HELP}"));
-            }
-            print!("{HELP}");
-            Ok(())
-        }
-        Some("-V" | "--version") => {
-            if let Some(argument) = args.next() {
-                return Err(format!("unknown argument: {argument}\n\n{HELP}"));
-            }
-            println!("segzify {}", env!("CARGO_PKG_VERSION"));
-            Ok(())
-        }
-        Some(argument) => Err(format!("unknown argument: {argument}\n\n{HELP}")),
-    }
+#[derive(Clone, ValueEnum)]
+enum ReportFormat {
+    Text,
+    Json,
+    None,
 }
-
+#[derive(Parser)]
+#[command(name = "segzify", version)]
+struct Args {
+    input: Option<PathBuf>,
+    #[arg(short, long, conflicts_with = "check")]
+    output: Option<PathBuf>,
+    #[arg(long, value_enum, default_value = "text")]
+    report: ReportFormat,
+    #[arg(long)]
+    report_output: Option<PathBuf>,
+    #[arg(long)]
+    check: bool,
+    #[arg(long)]
+    fail_on_unresolved: bool,
+}
 fn main() -> ExitCode {
-    match run(env::args()) {
-        Ok(()) => ExitCode::SUCCESS,
-        Err(message) => {
-            eprint!("{message}");
-            ExitCode::from(64)
+    let args = match Args::try_parse() {
+        Ok(args) => args,
+        Err(error) => {
+            let success = matches!(
+                error.kind(),
+                ErrorKind::DisplayHelp | ErrorKind::DisplayVersion
+            );
+            let _ = error.print();
+            return ExitCode::from(if success { 0 } else { 64 });
+        }
+    };
+    let input = match args.input {
+        Some(path) => fs::read_to_string(path),
+        None => {
+            let mut s = String::new();
+            io::stdin().read_to_string(&mut s).map(|_| s)
+        }
+    };
+    let Ok(input) = input else {
+        eprintln!("inputを讀み込めません");
+        return ExitCode::from(66);
+    };
+    let Ok(converter) = Converter::embedded() else {
+        eprintln!("變換dataを初期化できません");
+        return ExitCode::from(70);
+    };
+    let (text, report) = converter.convert(&input);
+    if !args.check {
+        if write_output(args.output.as_deref(), text.as_bytes(), false).is_err() {
+            eprintln!("outputを書き込めません");
+            return ExitCode::from(74);
         }
     }
+    let rendered = match args.report {
+        ReportFormat::Json => Some(serde_json::to_string_pretty(&report).unwrap() + "\n"),
+        ReportFormat::Text => Some(format!("{report:#?}\n")),
+        ReportFormat::None => None,
+    };
+    if let Some(rendered) = rendered {
+        if write_output(args.report_output.as_deref(), rendered.as_bytes(), true).is_err() {
+            eprintln!("reportを書き込めません");
+            return ExitCode::from(74);
+        }
+    }
+    let mut status = 0;
+    if args.check && text != input {
+        status |= 1;
+    }
+    if args.fail_on_unresolved
+        && (!report.unresolved_ambiguous_characters.is_empty()
+            || !report.boundary_skipped_compound_replacements.is_empty())
+    {
+        status |= 2;
+    }
+    ExitCode::from(status)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::run;
-
-    #[test]
-    fn accepts_help() {
-        assert!(run(["segzify".into(), "--help".into()]).is_ok());
-    }
-
-    #[test]
-    fn accepts_version() {
-        assert!(run(["segzify".into(), "--version".into()]).is_ok());
-    }
-
-    #[test]
-    fn rejects_unknown_arguments() {
-        assert!(run(["segzify".into(), "--unknown".into()]).is_err());
-    }
-
-    #[test]
-    fn rejects_unknown_trailing_arguments() {
-        assert!(run(["segzify".into(), "--version".into(), "--typo".into()]).is_err());
+fn write_output(path: Option<&std::path::Path>, text: &[u8], stderr: bool) -> io::Result<()> {
+    if let Some(path) = path {
+        fs::write(path, text)
+    } else if stderr {
+        io::stderr().write_all(text)
+    } else {
+        io::stdout().write_all(text)
     }
 }
