@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
+import io
 import json
 import urllib.request
 from collections import defaultdict
@@ -23,6 +25,9 @@ DEFAULT_SOURCE_URL = (
     "https://docs.google.com/spreadsheets/d/"
     "1CEBTf13rCCnA99Fvyg6PbBQTBRJN1JhevifxrfVGHE0/export?format=csv&gid=0"
 )
+DATA_DIR = Path(__file__).resolve().parent.parent / "dic"
+DEFAULT_OUTPUT = DATA_DIR / "kyuji_map.json"
+MANIFEST_PATH = DATA_DIR / "MANIFEST.json"
 
 
 @dataclass(frozen=True)
@@ -35,12 +40,10 @@ class Candidate:
 
 
 def parse_args() -> argparse.Namespace:
-    script_dir = Path(__file__).resolve().parent
-    default_output = script_dir.parent / "dic" / "kyuji_map.json"
     parser = argparse.ArgumentParser()
     parser.add_argument("--csv", type=Path, help="既に取得した CSV を使ふ")
     parser.add_argument("--source-url", default=DEFAULT_SOURCE_URL)
-    parser.add_argument("--output", type=Path, default=default_output)
+    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     return parser.parse_args()
 
 
@@ -68,7 +71,18 @@ def resolve_target(row: dict[str, str]) -> str | None:
 
 
 def load_rows(csv_text: str) -> list[dict[str, str]]:
-    return list(csv.DictReader(csv_text.splitlines()))
+    return list(csv.DictReader(io.StringIO(csv_text, newline="")))
+
+
+def update_manifest(snapshot_path: Path) -> None:
+    manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    manifest["files"][snapshot_path.name] = hashlib.sha256(
+        snapshot_path.read_bytes()
+    ).hexdigest()
+    MANIFEST_PATH.write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
 
 def build_snapshot(
@@ -145,6 +159,8 @@ def main() -> int:
         json.dumps(snapshot, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+    if args.output.resolve() == DEFAULT_OUTPUT.resolve():
+        update_manifest(args.output)
     print(f"wrote {args.output}")
     print(
         "char_map={char_map} ambiguous={ambiguous} unchanged={unchanged}".format(

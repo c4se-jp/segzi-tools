@@ -126,6 +126,22 @@ def load_known_sources(data_dir: Path) -> set[str]:
     return known
 
 
+def load_compound_sources(data_dir: Path) -> set[str]:
+    path = data_dir / "zh_compound_map.tsv"
+    if not path.exists():
+        return set()
+
+    sources: set[str] = set()
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        source = line.split("\t")[0]
+        if source:
+            sources.add(source)
+    return sources
+
+
 def resolve_ja_candidates(
     char: str, variant_pairs: dict[str, set[str]], reverse_kyuji: dict[str, str]
 ) -> set[str]:
@@ -137,13 +153,21 @@ def resolve_ja_candidates(
     return candidates
 
 
-def count_corpus_chars(scan_dirs: list[Path], targets: set[str]) -> Counter[str]:
+def count_corpus_chars(
+    scan_dirs: list[Path], targets: set[str], compound_sources: set[str]
+) -> Counter[str]:
     counter: Counter[str] = Counter()
     for scan_dir in scan_dirs:
         for path in scan_dir.rglob("*.md"):
             text = path.read_text(encoding="utf-8", errors="ignore")
-            for ch in text:
-                if ch in targets:
+            covered = [False] * len(text)
+            for compound in compound_sources:
+                start = 0
+                while (index := text.find(compound, start)) != -1:
+                    covered[index : index + len(compound)] = [True] * len(compound)
+                    start = index + len(compound)
+            for index, ch in enumerate(text):
+                if not covered[index] and ch in targets:
                     counter[ch] += 1
     return counter
 
@@ -164,9 +188,10 @@ def main() -> int:
         reverse_kyuji.setdefault(seiji, shinjitai)
 
     known_sources = load_known_sources(args.data_dir)
+    compound_sources = load_compound_sources(args.data_dir)
 
     unknown_variant_chars = {c for c in variant_pairs if c not in known_sources}
-    counter = count_corpus_chars(args.scan_dir, unknown_variant_chars)
+    counter = count_corpus_chars(args.scan_dir, unknown_variant_chars, compound_sources)
 
     rows = []
     for char, count in counter.most_common():
