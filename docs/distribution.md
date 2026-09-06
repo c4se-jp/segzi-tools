@@ -24,4 +24,6 @@ registryへ公開するまでは、利用者はREADMEに示すGit repositoryま�
 sh scripts/measure-release.sh
 ```
 
+scriptは旣定で `target/measure-release` にbuildし、`CARGO_TARGET_DIR` が指定されてゐればそのdirectoryを使う。いずれの場合もbuildと測定は同じdirectoryを使う。
+
 測定値はtarget platform、Rust compiler、linkerにより變動する。release候補を比較する時は、同じhost・toolchainで測定し、commandの出力をrelease noteへ記錄する。

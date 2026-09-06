@@ -1,9 +1,10 @@
 #!/bin/sh
 set -eu
 
-cargo build --release --locked
+target_dir=${CARGO_TARGET_DIR:-target/measure-release}
+CARGO_TARGET_DIR=$target_dir cargo build --release --locked
 
-binary=target/release/segzify
+binary=$target_dir/release/segzify
 bytes=$(wc -c < "$binary" | tr -d ' ')
 
 printf 'artifact\tbytes\n'
