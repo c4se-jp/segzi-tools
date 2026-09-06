@@ -12,11 +12,11 @@ Unicode 公式の Unihan データベース (kSimplifiedVariant / kTraditionalVa
 zh_char_map.tsv 等へ追記すること。
 
 使ひ方:
-    python3 .claude/skills/seiji-seikana-converter/scripts/find_zh_kanji_candidates.py \
+    python3 scripts/find_zh_kanji_candidates.py \
         --scan-dir wiki
 
 既に取得濟みの Unihan_Variants.txt を使ふ場合:
-    python3 .claude/skills/seiji-seikana-converter/scripts/find_zh_kanji_candidates.py \
+    python3 scripts/find_zh_kanji_candidates.py \
         --scan-dir wiki --unihan-variants /path/to/Unihan_Variants.txt
 """
 
@@ -35,7 +35,7 @@ UNIHAN_ZIP_URL = "https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip"
 
 def parse_args() -> argparse.Namespace:
     script_dir = Path(__file__).resolve().parent
-    data_dir = script_dir.parent / "data"
+    data_dir = script_dir.parent / "dic"
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--scan-dir",

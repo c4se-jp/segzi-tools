@@ -3,8 +3,8 @@
 公開 spreadsheet の CSV から、正字變換用の snapshot JSON を生成する。
 
 使ひ方:
-    python3 .claude/skills/seiji-seikana-converter/scripts/update_kyuji_data.py
-    python3 .claude/skills/seiji-seikana-converter/scripts/update_kyuji_data.py \
+    python3 scripts/update_kyuji_data.py
+    python3 scripts/update_kyuji_data.py \
         --csv /path/to/source.csv
 """
 
@@ -36,7 +36,7 @@ class Candidate:
 
 def parse_args() -> argparse.Namespace:
     script_dir = Path(__file__).resolve().parent
-    default_output = script_dir.parent / "data" / "kyuji_map.json"
+    default_output = script_dir.parent / "dic" / "kyuji_map.json"
     parser = argparse.ArgumentParser()
     parser.add_argument("--csv", type=Path, help="既に取得した CSV を使ふ")
     parser.add_argument("--source-url", default=DEFAULT_SOURCE_URL)
