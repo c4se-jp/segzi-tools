@@ -1,0 +1,46 @@
+---
+name: on pull_request
+
+"on":
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-gha:
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: write
+    uses: ./.github/workflows/wf-lint-gha.yaml # zizmor: ignore[self-repository]
+    with:
+      reporter: >-
+        ${{ github.event.pull_request.head.repo.fork && 'local' || 'github-pr-review' }}
+
+  test:
+    name: Test
+    permissions:
+      contents: read
+    timeout-minutes: 20
+    runs-on: ubuntu-24.04
+    steps:
+      - name: コードをチェックアウト
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Cargo.toml からRustの版を取得
+        run: |
+          rust_version="$(cargo metadata --no-deps --format-version=1 |
+            jq -er --arg manifest_path "$GITHUB_WORKSPACE/Cargo.toml" \
+              '.packages[] |
+              select(.manifest_path == $manifest_path) |
+              .rust_version')"
+          printf 'RUST_VERSION=%s\n' "$rust_version" >> "$GITHUB_ENV"
+      - name: Rustをインストール
+        run: rustup toolchain install "$RUST_VERSION" --profile minimal
+      - name: Rustの依存とbuild結果をキャッシュ
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - name: テストを実行
+        run: cargo +"$RUST_VERSION" test --locked
