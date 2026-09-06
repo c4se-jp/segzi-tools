@@ -10,8 +10,8 @@
 ## Decision
 
 - `segzify`を單一のRust crate / CLIとして提供し、舊實裝・舊辭書を撤去する。
-- 變換dataとUniDicを實行檔へ埋込み、外部dataの配置を導入時の前提にしない。
-- 熟語置換はUniDicの語境界で保護し、置換を見送った箇所と未解決の曖昧字はreportする。
+- 變換dataとUniDicを實行fileへ埋込み、外部dataの配置を導入時の前提にしない。
+- `zh_compound_map.tsv`による中國語由來の熟語正規化は、境界を判定せず先行適用する。後續の熟語置換はUniDicの語境界で保護し、見送った箇所と未解決の曖昧字はreportする。
 - CLIは標準入力/標準出力を旣定とし、reportは標準errorへ出す。`--check`、`--fail-on-unresolved`、明示した終了statusで自動處理できる契約を提供する。
 - Cargo source packageの收錄filesをallowlistで固定し、CLIに不要なfontは含めない。Git/source checkoutからの`cargo install`を配布導線とし、release實行file容量はscriptで測定する。
 
