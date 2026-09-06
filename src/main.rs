@@ -17,7 +17,7 @@ enum ReportFormat {
 #[command(name = "segzify", version)]
 struct Args {
     input: Option<PathBuf>,
-    #[arg(short, long)]
+    #[arg(short, long, conflicts_with = "check")]
     output: Option<PathBuf>,
     #[arg(long, value_enum, default_value = "text")]
     report: ReportFormat,
@@ -40,10 +40,6 @@ fn main() -> ExitCode {
             return ExitCode::from(if success { 0 } else { 64 });
         }
     };
-    if args.check && args.output.is_some() {
-        eprintln!("--check と --output は併用できません");
-        return ExitCode::from(64);
-    }
     let input = match args.input {
         Some(path) => fs::read_to_string(path),
         None => {
@@ -61,16 +57,9 @@ fn main() -> ExitCode {
     };
     let (text, report) = converter.convert(&input);
     if !args.check {
-        if let Some(path) = args.output {
-            if fs::write(path, &text).is_err() {
-                eprintln!("outputを書き込めません");
-                return ExitCode::from(74);
-            }
-        } else {
-            if io::stdout().write_all(text.as_bytes()).is_err() {
-                eprintln!("stdoutへ書き込めません");
-                return ExitCode::from(74);
-            }
+        if write_output(args.output.as_deref(), text.as_bytes(), false).is_err() {
+            eprintln!("outputを書き込めません");
+            return ExitCode::from(74);
         }
     }
     let rendered = match args.report {
@@ -79,15 +68,9 @@ fn main() -> ExitCode {
         ReportFormat::None => None,
     };
     if let Some(rendered) = rendered {
-        if let Some(path) = args.report_output {
-            if fs::write(path, rendered).is_err() {
-                eprintln!("reportを書き込めません");
-                return ExitCode::from(74);
-            }
-        } else {
-            if io::stderr().write_all(rendered.as_bytes()).is_err() {
-                return ExitCode::from(74);
-            }
+        if write_output(args.report_output.as_deref(), rendered.as_bytes(), true).is_err() {
+            eprintln!("reportを書き込めません");
+            return ExitCode::from(74);
         }
     }
     let mut status = 0;
@@ -101,4 +84,14 @@ fn main() -> ExitCode {
         status |= 2;
     }
     ExitCode::from(status)
+}
+
+fn write_output(path: Option<&std::path::Path>, text: &[u8], stderr: bool) -> io::Result<()> {
+    if let Some(path) = path {
+        fs::write(path, text)
+    } else if stderr {
+        io::stderr().write_all(text)
+    } else {
+        io::stdout().write_all(text)
+    }
 }
