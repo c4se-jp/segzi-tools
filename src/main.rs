@@ -56,22 +56,20 @@ fn main() -> ExitCode {
         return ExitCode::from(70);
     };
     let (text, report) = converter.convert(&input);
-    if !args.check {
-        if write_output(args.output.as_deref(), text.as_bytes(), false).is_err() {
-            eprintln!("outputを書き込めません");
-            return ExitCode::from(74);
-        }
+    if !args.check && write_output(args.output.as_deref(), text.as_bytes(), false).is_err() {
+        eprintln!("outputを書き込めません");
+        return ExitCode::from(74);
     }
     let rendered = match args.report {
         ReportFormat::Json => Some(serde_json::to_string_pretty(&report).unwrap() + "\n"),
         ReportFormat::Text => Some(format!("{report:#?}\n")),
         ReportFormat::None => None,
     };
-    if let Some(rendered) = rendered {
-        if write_output(args.report_output.as_deref(), rendered.as_bytes(), true).is_err() {
-            eprintln!("reportを書き込めません");
-            return ExitCode::from(74);
-        }
+    if let Some(rendered) = rendered
+        && write_output(args.report_output.as_deref(), rendered.as_bytes(), true).is_err()
+    {
+        eprintln!("reportを書き込めません");
+        return ExitCode::from(74);
     }
     let mut status = 0;
     if args.check && text != input {
