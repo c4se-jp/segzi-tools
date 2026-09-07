@@ -42,5 +42,7 @@ jobs:
         run: rustup toolchain install "$RUST_VERSION" --profile minimal
       - name: Rustの依存とbuild結果をキャッシュ
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - name: 辭書manifestを檢證
+        run: python3 scripts/verify_dic_manifest.py
       - name: テストを実行
         run: cargo +"$RUST_VERSION" test --locked
