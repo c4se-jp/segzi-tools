@@ -154,10 +154,13 @@ impl Converter {
         text = translate(&text, &self.zh_chars);
         let mut skipped = BTreeMap::new();
         for (source, target) in &self.compounds {
+            let mut start = text.find(source);
+            if start.is_none() {
+                continue;
+            }
             let boundaries = self.boundaries(&text);
             let mut pieces = Vec::new();
             let mut last = 0;
-            let mut start = text.find(source);
             while let Some(found) = start {
                 let end = found + source.len();
                 if boundaries.contains(&found) && boundaries.contains(&end) {
@@ -283,6 +286,19 @@ mod tests {
                 .boundary_skipped_compound_replacements
                 .iter()
                 .any(|item| item.source == "案分" && item.target == "按分" && item.count == 2)
+        );
+    }
+
+    #[test]
+    fn converts_compounds_at_word_boundaries_and_reports_skipped_occurrences() {
+        let converter = Converter::embedded().unwrap();
+        let (text, report) = converter.convert("案分をする。提案分布。");
+        assert_eq!(text, "按分をする。提案分布。");
+        assert!(
+            report
+                .boundary_skipped_compound_replacements
+                .iter()
+                .any(|item| item.source == "案分" && item.target == "按分" && item.count == 1)
         );
     }
 
