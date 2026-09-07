@@ -5,7 +5,7 @@
 
 ## Context
 
-Pull RequestでRust crateとGitHub Actions設定を再現可能に檢証しつつ、hookの入口と共通處理の所在を明確にする必要がある。
+Pull RequestでRust crateとGitHub Actions設定を再現可能に檢證しつつ、hookの入口と共通處理の所在を明確にする必要がある。
 
 ## Decision
 
@@ -13,7 +13,7 @@ Pull RequestでRust crateとGitHub Actions設定を再現可能に檢証しつ�
 - 長大なjob、または複數hookで共有するjobは、`wf-WORKFLOWNAME.yaml`の`workflow_call`へ分離する。
 - `on-pull_request.yaml`は、`Cargo.toml`の`rust-version`を`cargo metadata`から取得して`cargo test --locked`を實行する。
 - Rustの依存とbuild結果をcacheし、test jobのtimeoutはcold cacheを考慮して20分とする。
-- 同workflowから`wf-lint-gha.yaml`を呼び出し、`ne-sachirou/lint-gha-reviewdog`でGitHub Actionsを檢証する。fork PRでは書込みを必要としない`local` reporterを使い、同一PRの新しい實行は古い實行をcancelする。
+- 同workflowから`wf-lint-gha.yaml`を呼び出し、`ne-sachirou/lint-gha-reviewdog`でGitHub Actionsを檢證する。fork PRでは書込みを必要としない`local` reporterを使い、同一PRの新しい實行は古い實行をcancelする。
 - 外部Actionはcommit SHAで固定し、tagとの對應コメントを付ける。固定・更新には`pinact run`を使う。
 - workflowは`yamllint .github/workflows/`、`actionlint`、`zizmor .`、`ghalint run`を通過させる。
 
@@ -22,7 +22,7 @@ Pull RequestでRust crateとGitHub Actions設定を再現可能に檢証しつ�
 - hookと共通workflowの責務がfile名から分かり、共通處理を重複させない。
 - Rust版はmanifestだけで管理され、CIとの不一致を防ぐ。
 - fork PRでもlint結果でCIを失敗させられる一方、review commentは投稿されない。
-- 連續pushでは最新の實行だけを維持し、cacheがない初回實行にもtimeoutの余裕を持たせる。
+- 連續pushでは最新の實行だけを維持し、cacheがない初囘實行にもtimeoutの餘裕を持たせる。
 - Action更新は意圖的な`pinact`實行を要するが、參照するAction revisionを監査できる。
 
 ## Alternatives considered
