@@ -74,23 +74,12 @@ fn char_map(rows: Vec<(String, String)>) -> BTreeMap<char, String> {
         .collect()
 }
 
-fn inverse_unique_char_map(map: &BTreeMap<char, String>) -> BTreeMap<char, char> {
-    let mut inverse = BTreeMap::new();
-    for (from, to) in map {
-        if let Some(to) = (to.chars().count() == 1).then(|| to.chars().next().unwrap()) {
-            match inverse.entry(to) {
-                std::collections::btree_map::Entry::Vacant(entry) => {
-                    entry.insert(Some(*from));
-                }
-                std::collections::btree_map::Entry::Occupied(mut entry) => {
-                    entry.insert(None);
-                }
-            }
-        }
-    }
-    inverse
-        .into_iter()
-        .filter_map(|(to, from)| from.map(|from| (to, from)))
+fn segmentation_char_map(rows: Vec<(String, String)>) -> BTreeMap<char, char> {
+    rows.into_iter()
+        .filter_map(|(from, to)| {
+            (from.chars().count() == 1 && to.chars().count() == 1)
+                .then(|| (from.chars().next().unwrap(), to.chars().next().unwrap()))
+        })
         .collect()
 }
 
@@ -135,7 +124,9 @@ impl Converter {
                 rows
             },
             zh_chars: char_map(rows(include_str!("../dic/zh_char_map.tsv"))),
-            segmentation_chars: inverse_unique_char_map(&chars),
+            segmentation_chars: segmentation_char_map(rows(include_str!(
+                "../dic/unidic_normalization.tsv"
+            ))),
             chars,
             kana: rows(include_str!("../dic/kana_replacements.tsv")),
             patterns: rows(include_str!("../dic/kana_patterns.tsv"))
@@ -298,6 +289,10 @@ mod tests {
     #[test]
     fn converts_compounds_at_boundaries_after_old_character_normalization() {
         let converter = Converter::embedded().unwrap();
+        assert_eq!(converter.segmentation_chars.get(&'檢'), Some(&'検'));
+        assert_eq!(converter.segmentation_chars.get(&'實'), Some(&'実'));
+        assert!(!converter.segmentation_chars.contains_key(&'決'));
+        assert!(!converter.segmentation_chars.contains_key(&'京'));
         let (text, report) = converter.convert(include_str!(
             "../docs/adr-0002-github-actions-workflow-design.md"
         ));
