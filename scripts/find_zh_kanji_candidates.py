@@ -3,7 +3,7 @@
 简化字・繁體字 -> 日本語漢字 の變換表を育てるための候補抽出。
 
 Unicode 公式の Unihan データベース (kSimplifiedVariant / kTraditionalVariant) を
-既存の kyuji_map.json (日本語の新字体<->正字對應) と突き合はせ、
+既存の kiuzi_map.json (日本語の新字体<->正字對應) と突き合はせ、
 まだ zh_char_map.tsv / zh_compound_map.tsv / zh_ambiguous_characters.json に
 載ってゐない文字を、實際に指定したコーパスへ出現する頻度順で報吿する。
 
@@ -104,10 +104,10 @@ def load_variant_pairs(variants_text: str) -> dict[str, set[str]]:
 def load_known_sources(data_dir: Path) -> set[str]:
     known: set[str] = set()
 
-    kyuji = json.loads((data_dir / "kyuji_map.json").read_text(encoding="utf-8"))
-    known.update(kyuji["char_map"].keys())
-    known.update(kyuji["char_map"].values())
-    known.update(kyuji["ambiguous_characters"].keys())
+    kiuzi = json.loads((data_dir / "kiuzi_map.json").read_text(encoding="utf-8"))
+    known.update(kiuzi["char_map"].keys())
+    known.update(kiuzi["char_map"].values())
+    known.update(kiuzi["ambiguous_characters"].keys())
 
     for name in ("zh_char_map.tsv", "zh_compound_map.tsv"):
         path = data_dir / name
@@ -143,13 +143,13 @@ def load_compound_sources(data_dir: Path) -> set[str]:
 
 
 def resolve_ja_candidates(
-    char: str, variant_pairs: dict[str, set[str]], reverse_kyuji: dict[str, str]
+    char: str, variant_pairs: dict[str, set[str]], reverse_kiuzi: dict[str, str]
 ) -> set[str]:
     candidates: set[str] = set()
     for partner in variant_pairs.get(char, set()):
         if partner == char:
             continue
-        candidates.add(reverse_kyuji.get(partner, partner))
+        candidates.add(reverse_kiuzi.get(partner, partner))
     return candidates
 
 
@@ -182,10 +182,10 @@ def main() -> int:
     )
     variant_pairs = load_variant_pairs(variants_text)
 
-    kyuji = json.loads((args.data_dir / "kyuji_map.json").read_text(encoding="utf-8"))
-    reverse_kyuji: dict[str, str] = {}
-    for shinjitai, seiji in kyuji["char_map"].items():
-        reverse_kyuji.setdefault(seiji, shinjitai)
+    kiuzi = json.loads((args.data_dir / "kiuzi_map.json").read_text(encoding="utf-8"))
+    reverse_kiuzi: dict[str, str] = {}
+    for shinjitai, seiji in kiuzi["char_map"].items():
+        reverse_kiuzi.setdefault(seiji, shinjitai)
 
     known_sources = load_known_sources(args.data_dir)
     compound_sources = load_compound_sources(args.data_dir)
@@ -197,7 +197,7 @@ def main() -> int:
     for char, count in counter.most_common():
         if count < args.min_count:
             continue
-        candidates = resolve_ja_candidates(char, variant_pairs, reverse_kyuji)
+        candidates = resolve_ja_candidates(char, variant_pairs, reverse_kiuzi)
         candidates.discard(char)
         if not candidates:
             continue

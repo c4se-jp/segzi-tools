@@ -1,5 +1,5 @@
 #!/usr/bin/env bb
-(ns update-kyuji-data
+(ns update-kiuzi-data
   "公開spreadsheetのCSVから正字變換用snapshot JSONを生成する。"
   (:require
     [babashka.cli :as cli]
@@ -41,7 +41,7 @@
       (fs/path "dic")))
 
 
-(def default-output (fs/path data-dir "kyuji_map.json"))
+(def default-output (fs/path data-dir "kiuzi_map.json"))
 (def manifest-path (fs/path data-dir "MANIFEST.json"))
 
 
@@ -50,7 +50,7 @@
 
 
 (def usage
-  (str "Usage: bb scripts/update_kyuji_data.clj [OPTIONS]\n"
+  (str "Usage: bb scripts/update_kiuzi_data.clj [OPTIONS]\n"
        "\n"
        "Options:\n"
        "  --csv PATH          既に取得したCSVを使ふ\n"
