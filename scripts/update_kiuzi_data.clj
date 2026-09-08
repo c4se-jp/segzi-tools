@@ -45,7 +45,7 @@
 (def manifest-path (fs/path data-dir "MANIFEST.json"))
 
 
-(def python-date-formatter
+(def snapshot-date-formatter
   (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss.SSSSSSxxx"))
 
 
@@ -125,10 +125,10 @@
   (apply str (repeat (* level 2) " ")))
 
 
-(declare python-json)
+(declare formatted-json)
 
 
-(defn python-json-map
+(defn formatted-json-map
   [value level]
   (if (empty? value)
     "{}"
@@ -139,14 +139,14 @@
                   (str (indentation (inc level))
                        (json/generate-string key)
                        ": "
-                       (python-json (get value key) (inc level))))
+                       (formatted-json (get value key) (inc level))))
                 (sort code-point-compare (keys value))))
          "\n"
          (indentation level)
          "}")))
 
 
-(defn python-json-vector
+(defn formatted-json-vector
   [value level]
   (if (empty? value)
     "[]"
@@ -154,18 +154,18 @@
          (str/join
            ",\n"
            (map #(str (indentation (inc level))
-                      (python-json % (inc level)))
+                      (formatted-json % (inc level)))
                 value))
          "\n"
          (indentation level)
          "]")))
 
 
-(defn python-json
+(defn formatted-json
   [value level]
   (cond
-    (map? value) (python-json-map value level)
-    (sequential? value) (python-json-vector value level)
+    (map? value) (formatted-json-map value level)
+    (sequential? value) (formatted-json-vector value level)
     (string? value) (json/generate-string value)
     (nil? value) "null"
     (true? value) "true"
@@ -229,7 +229,7 @@
     {"source_url" source-url
      "generated_at" (-> (OffsetDateTime/now ZoneOffset/UTC)
                         (.truncatedTo ChronoUnit/MICROS)
-                        (.format python-date-formatter))
+                        (.format snapshot-date-formatter))
      "row_count" (count rows)
      "input_csv" input-csv
      "char_map" char-map
@@ -251,7 +251,7 @@
                                      source-url
                                      (some-> csv str))]
         (fs/create-dirs (fs/parent output))
-        (spit (str output) (str (python-json snapshot 0) "\n"))
+        (spit (str output) (str (formatted-json snapshot 0) "\n"))
         (when (Files/isSameFile output default-output)
           (update-manifest output))
         (println (str "wrote " output))
