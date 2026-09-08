@@ -42,7 +42,11 @@ jobs:
         run: rustup toolchain install "$RUST_VERSION" --profile minimal
       - name: Rustの依存とbuild結果をキャッシュ
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - name: Babashkaをインストール
+        uses: DeLaGuardo/setup-clojure@4c7a6f613e5089821bb3bb2a33a3ee115578580d # 13.6.1
+        with:
+          bb: 1.12.218
       - name: 辭書manifestを檢證
-        run: python3 scripts/verify_dic_manifest.py
+        run: bb scripts/verify_dic_manifest.clj
       - name: テストを実行
         run: cargo +"$RUST_VERSION" test --locked
