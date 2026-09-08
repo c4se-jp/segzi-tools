@@ -31,14 +31,20 @@
 (defn main
   []
   (let [manifest (json/parse-string (slurp (str manifest-path)))
-        invalid? (atom false)]
-    (doseq [[name expected] (get manifest "files")]
-      (let [actual (sha256 (fs/path data-dir name))]
-        (when (not= actual expected)
-          (binding [*out* *err*]
-            (println (format "%s: expected %s, got %s" name expected actual)))
-          (reset! invalid? true))))
-    (if @invalid? 1 0)))
+        files (get manifest "files")]
+    (if-not (map? files)
+      (do
+        (binding [*out* *err*]
+          (println "MANIFEST.json: files must be an object"))
+        1)
+      (let [invalid? (atom false)]
+        (doseq [[name expected] files]
+          (let [actual (sha256 (fs/path data-dir name))]
+            (when (not= actual expected)
+              (binding [*out* *err*]
+                (println (format "%s: expected %s, got %s" name expected actual)))
+              (reset! invalid? true))))
+        (if @invalid? 1 0)))))
 
 
 (System/exit (main))
