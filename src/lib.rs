@@ -85,7 +85,7 @@ fn segmentation_char_map(rows: Vec<(String, String)>) -> BTreeMap<char, char> {
 
 impl Converter {
     pub fn embedded() -> Result<Self, String> {
-        let segzi: SegziMap = serde_json::from_str(include_str!("../dic/kyuji_map.json"))
+        let segzi: SegziMap = serde_json::from_str(include_str!("../dic/kiuzi_map.json"))
             .map_err(|error| error.to_string())?;
         let mut ambiguous = BTreeMap::new();
         for (source, candidates) in segzi.ambiguous_characters {
