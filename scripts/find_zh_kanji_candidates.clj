@@ -1,6 +1,6 @@
 #!/usr/bin/env bb
 (ns find-zh-kanji-candidates
-  "簡化字・繁體字から日本語漢字への變換候補を抽出する。"
+  "简化字・繁體字から日本語漢字への變換候補を抽出する。"
   (:require
     [babashka.cli :as cli]
     [babashka.fs :as fs]
