@@ -53,6 +53,14 @@ jobs:
             exit 0
           fi
 
+          if diff --brief \
+            <(git show HEAD:dic/kiuzi_map.json |
+              jq --sort-keys 'del(.generated_at)') \
+            <(jq --sort-keys 'del(.generated_at)' dic/kiuzi_map.json); then
+            echo "生成日時以外の更新はありません。"
+            exit 0
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add dic/kiuzi_map.json dic/MANIFEST.json
