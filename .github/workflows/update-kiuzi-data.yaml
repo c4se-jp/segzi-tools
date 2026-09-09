@@ -1,0 +1,69 @@
+---
+name: 正字變換データを週次更新
+
+"on":
+  schedule:
+    # 月曜 00:00 (JST)
+    - cron: "0 15 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-kiuzi-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: 正字變換データを更新
+    timeout-minutes: 10
+    runs-on: ubuntu-24.04
+    steps:
+      - name: コードをチェックアウト
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Babashkaをインストール
+        uses: DeLaGuardo/setup-clojure@4c7a6f613e5089821bb3bb2a33a3ee115578580d # 13.6.1
+        with:
+          bb: 1.12.218
+      - name: pull request用branchを設定
+        run: |
+          printf 'BRANCH=automation/update-kiuzi-data-%s\n' \
+            "$(TZ=Asia/Tokyo date +%F)" >> "$GITHUB_ENV"
+      - name: 既存の更新branchをチェックアウト
+        run: |
+          if git ls-remote --exit-code --heads origin "$BRANCH"; then
+            git fetch origin "$BRANCH"
+            git switch --track "origin/$BRANCH"
+          else
+            git switch --create "$BRANCH"
+          fi
+      - name: 正字變換データを更新
+        run: bb scripts/update_kiuzi_data.clj
+      - name: 更新をcommitしてpull requestを作成
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet; then
+            echo "更新はありません。"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dic/kiuzi_map.json dic/MANIFEST.json
+          git commit -m "正字變換データを更新"
+          git push \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            "$BRANCH"
+          if ! gh pr view "$BRANCH" --json number >/dev/null 2>&1; then
+            gh pr create \
+              --base "$DEFAULT_BRANCH" \
+              --head "$BRANCH" \
+              --title "正字變換データを更新" \
+              --body "公開spreadsheetから正字變換データを自動更新しました。"
+          fi
