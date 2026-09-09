@@ -33,7 +33,7 @@ jobs:
         run: |
           printf 'BRANCH=automation/update-kiuzi-data-%s\n' \
             "$(TZ=Asia/Tokyo date +%F)" >> "$GITHUB_ENV"
-      - name: 既存の更新branchをチェックアウト
+      - name: 既存の更新branchをチェックアウト
         run: |
           if git ls-remote --exit-code --heads origin "$BRANCH"; then
             git fetch origin "$BRANCH"
@@ -43,7 +43,7 @@ jobs:
           fi
       - name: 正字變換データを更新
         run: bb scripts/update_kiuzi_data.clj
-      - name: 更新をcommitしてpull requestを作成
+      - name: 更新をcommitしてpull requestを作成
         env:
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
           GH_TOKEN: ${{ github.token }}
@@ -57,7 +57,7 @@ jobs:
             <(git show HEAD:dic/kiuzi_map.json |
               jq --sort-keys 'del(.generated_at)') \
             <(jq --sort-keys 'del(.generated_at)' dic/kiuzi_map.json); then
-            echo "生成日時以外の更新はありません。"
+            echo "生成日時以外の更新はありません。"
             exit 0
           fi
 
