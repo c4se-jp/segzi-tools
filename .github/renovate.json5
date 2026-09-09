@@ -15,12 +15,6 @@
       enabled: false,
       matchUpdateTypes: ["patch"],
     },
-    {
-      description: "Keep Babashka at its latest release",
-      enabled: true,
-      matchDepNames: ["babashka/babashka"],
-      matchManagers: ["custom.regex"],
-    },
   ],
 
   customManagers: [
