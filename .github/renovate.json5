@@ -20,12 +20,12 @@
   customManagers: [
     {
       customType: "regex",
+      datasourceTemplate: "github-releases",
+      depNameTemplate: "babashka/babashka",
       managerFilePatterns: ["/(^|/).github/workflows/[^/]+\\.ya?ml$/"],
       matchStrings: [
         "uses:\\s+DeLaGuardo/setup-clojure@[^\\s]+[^\\r\\n]*\\r?\\n\\s+with:\\s*\\r?\\n\\s+bb:\\s+(?<currentValue>[^\\s#]+)",
       ],
-      datasourceTemplate: "github-releases",
-      depNameTemplate: "babashka/babashka",
       versioningTemplate: "semver",
     },
   ],
