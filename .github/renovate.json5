@@ -15,6 +15,25 @@
       enabled: false,
       matchUpdateTypes: ["patch"],
     },
+    {
+      description: "Keep Babashka at its latest release",
+      enabled: true,
+      matchDepNames: ["babashka/babashka"],
+      matchManagers: ["custom.regex"],
+    },
+  ],
+
+  customManagers: [
+    {
+      customType: "regex",
+      managerFilePatterns: ["/(^|/).github/workflows/[^/]+\\.ya?ml$/"],
+      matchStrings: [
+        "uses:\\s+DeLaGuardo/setup-clojure@[^\\s]+[^\\r\\n]*\\r?\\n\\s+with:\\s*\\r?\\n\\s+bb:\\s+(?<currentValue>[^\\s#]+)",
+      ],
+      datasourceTemplate: "github-releases",
+      depNameTemplate: "babashka/babashka",
+      versioningTemplate: "semver",
+    },
   ],
 
   // GitHub AdvisoryとOSVの兩方を用ゐ、通常のpatch更新を無效にしてもsecurity fixを作成する。
