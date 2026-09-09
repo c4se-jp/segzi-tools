@@ -225,12 +225,14 @@
                         (fetch-unihan-variants))
         variant-pairs (load-variant-pairs variants-text)
         kiuzi (json/parse-string (slurp (str (fs/path data-dir "kiuzi_map.json"))))
-        reverse-kiuzi (reduce-kv (fn [reversed shinjitai seiji]
-                                   (if (contains? reversed seiji)
-                                     reversed
-                                     (assoc reversed seiji shinjitai)))
-                                 {}
-                                 (get kiuzi "char_map"))
+        reverse-kiuzi (reduce (fn [reversed [shinjitai seiji]]
+                                (if (contains? reversed seiji)
+                                  reversed
+                                  (assoc reversed seiji shinjitai)))
+                              {}
+                              (sort (fn [[left _] [right _]]
+                                      (code-point-compare left right))
+                                    (get kiuzi "char_map")))
         known-sources (load-known-sources data-dir)
         compound-sources (load-compound-sources data-dir)
         unknown-variant-chars (reduce disj (set (keys variant-pairs)) known-sources)
