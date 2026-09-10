@@ -5,6 +5,7 @@ CONTRIBUTING
 
 - 正かなづかひ: seg-kanazukahi
 - 正字: segzi
+- 舊字: kuizi
 
 Test
 --
