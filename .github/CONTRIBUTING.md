@@ -1,7 +1,7 @@
 CONTRIBUTING
 ==
 
-識別子名は segsyoxafu で書く。
+以下の語を識別子名に使ふ際には、segsyoxafu を參考に以下の綴りで書く。
 
 - 正かなづかひ: seg-kanazukahi
 - 正字: segzi
@@ -11,5 +11,5 @@ Test
 --
 
 ```sh
-stack test
+make test
 ```
