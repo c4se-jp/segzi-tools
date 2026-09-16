@@ -44,7 +44,7 @@ segzify original.txt --output converted.txt --report json --report-output report
 segzify --check original.txt
 ```
 
-曖昧な字または語境界のため見送った熟語置換をerrorにするには、`--fail-on-unresolved` を追加します。この場合の終了statusは 2です。`--check` と同時ならstatusはbitwise ORされます。usage errorは64、input讀取失敗は66、初期化失敗は70、output書込失敗は74です。
+曖昧な字、文化廳表の未確定な置換候補、または語境界のため見送った熟語置換をerrorにするには、`--fail-on-unresolved` を追加します。この場合の終了statusは 2です。`--check` と同時ならstatusはbitwise ORされます。usage errorは64、input讀取失敗は66、初期化失敗は70、output書込失敗は74です。
 
 ## Font
 

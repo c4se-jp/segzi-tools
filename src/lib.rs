@@ -26,6 +26,7 @@ pub struct AmbiguousCharacter {
 pub struct Report {
     pub unresolved_ambiguous_characters: Vec<AmbiguousCharacter>,
     pub boundary_skipped_compound_replacements: Vec<CompoundReplacement>,
+    pub unresolved_bunka_replacements: Vec<CompoundReplacement>,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct CompoundReplacement {
@@ -34,9 +35,24 @@ pub struct CompoundReplacement {
     pub count: usize,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum BunkaReplacementKind {
+    Safe,
+    Candidate,
+    Pending,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct BunkaReplacement {
+    source: String,
+    target: String,
+    kind: BunkaReplacementKind,
+}
+
 pub struct Converter {
     zh_compounds: Vec<(String, String)>,
     compounds: Vec<(String, String)>,
+    bunka_candidates: Vec<BunkaReplacement>,
     zh_chars: BTreeMap<char, String>,
     chars: BTreeMap<char, String>,
     segmentation_chars: BTreeMap<char, char>,
@@ -64,6 +80,47 @@ fn replacement_rows(input: &str) -> Vec<(String, String)> {
     let mut result = rows(input);
     result.sort_by_key(|(from, _)| std::cmp::Reverse(from.chars().count()));
     result
+}
+
+fn bunka_replacement_rows(input: &str) -> Result<Vec<BunkaReplacement>, String> {
+    let mut replacements = Vec::new();
+    for (line_number, line) in input.lines().enumerate() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let mut fields = line.split('\t');
+        let source = fields
+            .next()
+            .ok_or_else(|| format!("文化廳置換表 {} 行目にsourceがありません", line_number + 1))?;
+        let target = fields
+            .next()
+            .ok_or_else(|| format!("文化廳置換表 {} 行目にtargetがありません", line_number + 1))?;
+        let kind = match fields.next() {
+            Some("safe") => BunkaReplacementKind::Safe,
+            Some("candidate") => BunkaReplacementKind::Candidate,
+            Some("pending") => BunkaReplacementKind::Pending,
+            Some(kind) => {
+                return Err(format!(
+                    "文化廳置換表 {} 行目のkindが不正です: {kind}",
+                    line_number + 1
+                ));
+            }
+            None => {
+                return Err(format!(
+                    "文化廳置換表 {} 行目にkindがありません",
+                    line_number + 1
+                ));
+            }
+        };
+        replacements.push(BunkaReplacement {
+            source: source.to_owned(),
+            target: target.to_owned(),
+            kind,
+        });
+    }
+    replacements.sort_by_key(|replacement| std::cmp::Reverse(replacement.source.chars().count()));
+    Ok(replacements)
 }
 
 fn char_map(rows: Vec<(String, String)>) -> BTreeMap<char, String> {
@@ -114,15 +171,23 @@ impl Converter {
             }
         }
         let chars = char_map(segzi.char_map.into_iter().collect());
+        let bunka_replacements =
+            bunka_replacement_rows(include_str!("../dic/compound_replacements_bunka.tsv"))?;
+        let (safe_bunka_replacements, bunka_candidates): (Vec<_>, Vec<_>) = bunka_replacements
+            .into_iter()
+            .partition(|replacement| replacement.kind == BunkaReplacementKind::Safe);
         Ok(Self {
             zh_compounds: replacement_rows(include_str!("../dic/zh_compound_map.tsv")),
             compounds: {
                 let mut rows = replacement_rows(include_str!("../dic/compound_replacements.tsv"));
-                rows.extend(replacement_rows(include_str!(
-                    "../dic/compound_replacements_bunka.tsv"
-                )));
+                rows.extend(
+                    safe_bunka_replacements.iter().map(|replacement| {
+                        (replacement.source.clone(), replacement.target.clone())
+                    }),
+                );
                 rows
             },
+            bunka_candidates,
             zh_chars: char_map(rows(include_str!("../dic/zh_char_map.tsv"))),
             segmentation_chars: segmentation_char_map(rows(include_str!(
                 "../dic/unidic_normalization.tsv"
@@ -152,6 +217,7 @@ impl Converter {
             text = text.replace(from, to);
         }
         text = translate(&text, &self.zh_chars);
+        let unresolved_bunka_replacements = self.bunka_replacement_report(&text);
         let mut skipped = BTreeMap::new();
         for (source, target) in &self.compounds {
             let mut start = text.find(source);
@@ -210,9 +276,36 @@ impl Converter {
                         count,
                     })
                     .collect(),
+                unresolved_bunka_replacements,
             },
         )
     }
+
+    fn bunka_replacement_report(&self, text: &str) -> Vec<CompoundReplacement> {
+        let boundaries = self.boundaries(text);
+        let mut unresolved = BTreeMap::new();
+        for replacement in &self.bunka_candidates {
+            let mut start = text.find(&replacement.source);
+            while let Some(found) = start {
+                let end = found + replacement.source.len();
+                if boundaries.contains(&found) && boundaries.contains(&end) {
+                    *unresolved
+                        .entry((replacement.source.clone(), replacement.target.clone()))
+                        .or_insert(0) += 1;
+                }
+                start = text[end..].find(&replacement.source).map(|next| end + next);
+            }
+        }
+        unresolved
+            .into_iter()
+            .map(|((source, target), count)| CompoundReplacement {
+                source,
+                target,
+                count,
+            })
+            .collect()
+    }
+
     fn boundaries(&self, text: &str) -> std::collections::BTreeSet<usize> {
         let mut boundaries: std::collections::BTreeSet<usize> =
             [0, text.len()].into_iter().collect();
@@ -277,26 +370,21 @@ mod tests {
     }
 
     #[test]
-    fn skips_compound_inside_another_word() {
+    fn does_not_report_pending_bunka_replacements_inside_another_word() {
         let converter = Converter::embedded().unwrap();
         let (text, report) = converter.convert("提案分布。提案分布");
         assert_eq!(text, "提案分布。提案分布");
-        assert!(
-            report
-                .boundary_skipped_compound_replacements
-                .iter()
-                .any(|item| item.source == "案分" && item.target == "按分" && item.count == 2)
-        );
+        assert!(report.unresolved_bunka_replacements.is_empty());
     }
 
     #[test]
-    fn converts_compounds_at_word_boundaries_and_reports_skipped_occurrences() {
+    fn reports_pending_bunka_replacements_at_word_boundaries() {
         let converter = Converter::embedded().unwrap();
         let (text, report) = converter.convert("案分をする。提案分布。");
-        assert_eq!(text, "按分をする。提案分布。");
+        assert_eq!(text, "案分をする。提案分布。");
         assert!(
             report
-                .boundary_skipped_compound_replacements
+                .unresolved_bunka_replacements
                 .iter()
                 .any(|item| item.source == "案分" && item.target == "按分" && item.count == 1)
         );
@@ -320,6 +408,19 @@ mod tests {
                 .boundary_skipped_compound_replacements
                 .iter()
                 .any(|item| ["檢証", "初回", "余裕"].contains(&item.source.as_str()))
+        );
+    }
+
+    #[test]
+    fn reports_pending_bunka_replacements_without_changing_the_input() {
+        let converter = Converter::embedded().unwrap();
+        let (text, report) = converter.convert("膨大な資料");
+        assert_eq!(text, "膨大な資料");
+        assert!(
+            report
+                .unresolved_bunka_replacements
+                .iter()
+                .any(|item| item.source == "膨大" && item.target == "厖大" && item.count == 1)
         );
     }
 }
