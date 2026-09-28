@@ -22,7 +22,7 @@ install: ## segzifyをinstallする
 	cargo install --path . --locked
 
 .PHONY: lint
-lint: lint-clj lint-gha ## lint
+lint: lint-clj lint-gha lint-sh ## lint
 .PHONY: lint-clj
 lint-clj:
 	cljstyle check
@@ -33,6 +33,9 @@ lint-gha:
 	actionlint
 	zizmor .
 	ghalint run
+.PHONY: lint-sh
+lint-sh:
+	shellcheck scripts/*.sh
 
 .PHONY: test
 test: ## test
