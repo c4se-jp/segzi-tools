@@ -4,10 +4,10 @@
   "source_path": "wiki/.claude/skills/seiji-seikana-converter/data",
   "ivs_policy": "never-introduce",
   "files": {
-    "compound_replacements.tsv": "833d3646ea565e78ab7b0bae28e4cc94cfc3a971258d2903f74a491bb8e3d7a1",
+    "compound_replacements.tsv": "d5c100884f0d8fd25dfce8f8359a6d546fb64acd93437b12ff71e670d9b4164b",
     "compound_replacements_bunka.tsv": "5fc0f1c2a64690adfd45d16299875f6c89b1088703207ab3b181b677b7dd5353",
     "kana_patterns.tsv": "3c492c28fe929fbc5ab4b81c84e068b2eb7c211ec0620db0f6b01363ddf525f3",
-    "kana_replacements.tsv": "1d0a32b7ac7e0caccb6f015d17a5cc27121b424624f5095f999be478ebccc584",
+    "kana_replacements.tsv": "2e943de57bb200bcf854d63d65070e48fd0cb1de3e8c48c62d554e4bd160ef00",
     "kiuzi_map.json": "095c85b53ee7bc8122733a2835abd2031d0f8b5c652dce73223080cab8c7990a",
     "unidic_normalization.tsv": "06f473dfb788821fa41a123ad25153523a40d27ed979d87a36b88dfa5b5871a7",
     "zh_ambiguous_characters.json": "b8ae0c78d33c18320bf494eae35123802e648f7732d32b2e1a042bc1833ed182",
