@@ -177,19 +177,11 @@ impl Converter {
             .into_iter()
             .partition(|replacement| replacement.kind == BunkaReplacementKind::Safe);
         let mut compounds = replacement_rows(include_str!("../dic/compound_replacements.tsv"));
-        let ordinary_compounds: std::collections::BTreeSet<_> = compounds.iter().cloned().collect();
         compounds.extend(
             safe_bunka_replacements
                 .iter()
                 .map(|replacement| (replacement.source.clone(), replacement.target.clone())),
         );
-        let bunka_candidates = bunka_candidates
-            .into_iter()
-            .filter(|replacement| {
-                !ordinary_compounds
-                    .contains(&(replacement.source.clone(), replacement.target.clone()))
-            })
-            .collect();
         Ok(Self {
             zh_compounds: replacement_rows(include_str!("../dic/zh_compound_map.tsv")),
             compounds,
@@ -431,15 +423,16 @@ mod tests {
     }
 
     #[test]
-    fn does_not_report_pending_bunka_replacements_resolved_by_ordinary_rules() {
+    fn reports_pending_bunka_replacements_that_were_removed_from_ordinary_rules() {
         let converter = Converter::embedded().unwrap();
-        let (text, report) = converter.convert("回復する");
-        assert_eq!(text, "恢復する");
-        assert!(
-            !report
-                .unresolved_bunka_replacements
-                .iter()
-                .any(|item| item.source == "回復" && item.target == "恢復")
-        );
+        let (_, report) = converter.convert("回復する。回転する。連係する。");
+        for (source, target) in [("回復", "恢復"), ("回転", "廻転"), ("連係", "連繋")] {
+            assert!(
+                report
+                    .unresolved_bunka_replacements
+                    .iter()
+                    .any(|item| item.source == source && item.target == target && item.count == 1)
+            );
+        }
     }
 }
