@@ -77,7 +77,8 @@ fn main() -> ExitCode {
     }
     if args.fail_on_unresolved
         && (!report.unresolved_ambiguous_characters.is_empty()
-            || !report.boundary_skipped_compound_replacements.is_empty())
+            || !report.boundary_skipped_compound_replacements.is_empty()
+            || !report.unresolved_bunka_replacements.is_empty())
     {
         status |= 2;
     }
