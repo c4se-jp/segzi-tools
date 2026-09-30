@@ -368,21 +368,26 @@ mod tests {
     }
 
     #[test]
-    fn does_not_report_pending_bunka_replacements_inside_another_word() {
+    fn skips_safe_bunka_replacements_inside_another_word() {
         let converter = Converter::embedded().unwrap();
         let (text, report) = converter.convert("提案分布。提案分布");
         assert_eq!(text, "提案分布。提案分布");
-        assert!(report.unresolved_bunka_replacements.is_empty());
+        assert!(
+            report
+                .boundary_skipped_compound_replacements
+                .iter()
+                .any(|item| item.source == "案分" && item.target == "按分" && item.count == 2)
+        );
     }
 
     #[test]
-    fn reports_pending_bunka_replacements_at_word_boundaries() {
+    fn converts_safe_bunka_replacements_at_word_boundaries() {
         let converter = Converter::embedded().unwrap();
         let (text, report) = converter.convert("案分をする。提案分布。");
-        assert_eq!(text, "案分をする。提案分布。");
+        assert_eq!(text, "按分をする。提案分布。");
         assert!(
             report
-                .unresolved_bunka_replacements
+                .boundary_skipped_compound_replacements
                 .iter()
                 .any(|item| item.source == "案分" && item.target == "按分" && item.count == 1)
         );
