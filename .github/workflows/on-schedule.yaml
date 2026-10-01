@@ -26,7 +26,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Babashkaをインストール
-        uses: DeLaGuardo/setup-clojure@4c7a6f613e5089821bb3bb2a33a3ee115578580d # 13.6.1
+        uses: DeLaGuardo/setup-clojure@6d46099eae24853c33c0482f2bb54edf4f1a4c74 # 13.7.0
         with:
           bb: 1.13.224
       - name: pull request用branchを設定
