@@ -460,6 +460,59 @@ mod tests {
     }
 
     #[test]
+    fn converts_safe_bunka_replacements_for_traces() {
+        let converter = Converter::embedded().unwrap();
+        let (text, report) = converter.convert("古跡、史跡、奇跡、手跡、旧跡、真跡、筆跡、遺跡。");
+        assert_eq!(text, "古蹟、史蹟、奇蹟、手蹟、舊蹟、眞蹟、筆蹟、遺蹟。");
+        for (source, target) in [
+            ("古跡", "古蹟"),
+            ("史跡", "史蹟"),
+            ("奇跡", "奇蹟"),
+            ("手跡", "手蹟"),
+            ("旧跡", "旧蹟"),
+            ("真跡", "真蹟"),
+            ("筆跡", "筆蹟"),
+            ("遺跡", "遺蹟"),
+        ] {
+            assert!(
+                !report
+                    .unresolved_bunka_replacements
+                    .iter()
+                    .any(|item| item.source == source && item.target == target)
+            );
+        }
+    }
+
+    #[test]
+    fn skips_safe_bunka_replacements_for_traces_inside_other_words() {
+        let converter = Converter::embedded().unwrap();
+        let (text, report) = converter.convert(
+            "中古跡地。歴史跡地。好奇跡地。挙手跡地。新旧跡地。写真跡地。鉛筆跡地。後遺跡地。",
+        );
+        assert_eq!(
+            text,
+            "中古跡地。歷史跡地。好奇跡地。擧手跡地。新舊跡地。寫眞跡地。鉛筆跡地。後遺跡地。"
+        );
+        for (source, target) in [
+            ("古跡", "古蹟"),
+            ("史跡", "史蹟"),
+            ("奇跡", "奇蹟"),
+            ("手跡", "手蹟"),
+            ("旧跡", "旧蹟"),
+            ("真跡", "真蹟"),
+            ("筆跡", "筆蹟"),
+            ("遺跡", "遺蹟"),
+        ] {
+            assert!(
+                report
+                    .boundary_skipped_compound_replacements
+                    .iter()
+                    .any(|item| item.source == source && item.target == target && item.count == 1)
+            );
+        }
+    }
+
+    #[test]
     fn converts_compounds_at_boundaries_after_old_character_normalization() {
         let converter = Converter::embedded().unwrap();
         assert_eq!(converter.segmentation_chars.get(&'檢'), Some(&'検'));
