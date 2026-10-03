@@ -394,6 +394,19 @@ mod tests {
     }
 
     #[test]
+    fn converts_safe_bunka_replacements_with_the_same_meaning() {
+        let converter = Converter::embedded().unwrap();
+        let (text, report) = converter.convert("七転八倒した。");
+        assert_eq!(text, "七顚八倒した。");
+        assert!(
+            !report
+                .unresolved_bunka_replacements
+                .iter()
+                .any(|item| item.source == "七転八倒" && item.target == "七顚八倒")
+        );
+    }
+
+    #[test]
     fn converts_compounds_at_boundaries_after_old_character_normalization() {
         let converter = Converter::embedded().unwrap();
         assert_eq!(converter.segmentation_chars.get(&'檢'), Some(&'検'));

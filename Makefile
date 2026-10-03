@@ -40,3 +40,7 @@ lint-sh:
 .PHONY: test
 test: ## test
 	cargo test
+
+.PHONY: bunka-audit
+bunka-audit: ## 文化廳置換候補を檢討する
+	bb scripts/audit_bunka_replacements.clj
