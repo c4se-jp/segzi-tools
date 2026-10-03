@@ -409,8 +409,7 @@ mod tests {
     #[test]
     fn converts_safe_bunka_replacements_for_evil() {
         let converter = Converter::embedded().unwrap();
-        let (text, report) =
-            converter.convert("元凶、凶刃、凶器、凶変、凶悪、凶暴、凶漢、凶行。");
+        let (text, report) = converter.convert("元凶、凶刃、凶器、凶変、凶悪、凶暴、凶漢、凶行。");
         assert_eq!(text, "元兇、兇刃、兇器、兇變、兇惡、兇暴、兇漢、兇行。");
         for (source, target) in [
             ("元凶", "元兇"),
@@ -427,6 +426,35 @@ mod tests {
                     .unresolved_bunka_replacements
                     .iter()
                     .any(|item| item.source == source && item.target == target)
+            );
+        }
+    }
+
+    #[test]
+    fn skips_safe_bunka_replacements_for_evil_inside_other_words() {
+        let converter = Converter::embedded().unwrap();
+        let (text, report) = converter.convert(
+            "地元凶作。吉凶刃物。吉凶器物。吉凶変化。吉凶悪事。吉凶暴力。吉凶漢字。吉凶行為。",
+        );
+        assert_eq!(
+            text,
+            "地元凶作。吉凶刃物。吉凶器物。吉凶變化。吉凶惡事。吉凶暴力。吉凶漢字。吉凶行爲。"
+        );
+        for (source, target) in [
+            ("元凶", "元兇"),
+            ("凶刃", "兇刃"),
+            ("凶器", "兇器"),
+            ("凶変", "兇変"),
+            ("凶悪", "兇悪"),
+            ("凶暴", "兇暴"),
+            ("凶漢", "兇漢"),
+            ("凶行", "兇行"),
+        ] {
+            assert!(
+                report
+                    .boundary_skipped_compound_replacements
+                    .iter()
+                    .any(|item| item.source == source && item.target == target && item.count == 1)
             );
         }
     }
