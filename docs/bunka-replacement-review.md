@@ -7,7 +7,7 @@
 1. `bb scripts/audit_bunka_replacements.clj` を實行する。出力は、`pending` を變更字對ごとに件數順で束ねた一覽である。
 2. 一つの字對について、文化廳原表、辭書、用例を調べる。語義同一性、正字化規則との整合、專門語としての用法を確認する。
 3. 置換を採用するなら `safe` にする。自動置換できなければ `pending` に維持する。警吿候補にも不要なら行を削除する。`candidate` は現狀で `pending` と同じく未解決として報吿されるので、判定結果には使はない。
-4. `safe` にする各語について、語境界で置換し、語中では置換しないtestを追加する。`cargo test` と `bb scripts/verify_dic_manifest.clj` を實行する。
+4. `safe` の置換、語中での見送り、`pending` の報吿を代表例でtestする。`cargo test` と `bb scripts/verify_dic_manifest.clj` を實行する。
 
 scriptは、欄數及び `kind`、重複するsource、通常の熟語規則と重なる `safe`、`safe` 同士の置換連鎖を檢査する。衝突があればstatus 1で終了する。
 
