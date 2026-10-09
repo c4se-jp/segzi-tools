@@ -5,7 +5,7 @@
   "ivs_policy": "never-introduce",
   "files": {
     "compound_replacements.tsv": "0f0bf0714ebc1740c2afa847d3e897de8754d8474f4d71dea4dd6f0f036f831e",
-    "compound_replacements_bunka.tsv": "390df6c00e1a9a37b6da5b5eda5447a4ce2c269f38b6e82f6b3f4dfa49fbc553",
+    "compound_replacements_bunka.tsv": "10029e348d4db79c11504a6666c20cab8bf8bc5d47afc1836dc192031049178c",
     "kana_patterns.tsv": "3c492c28fe929fbc5ab4b81c84e068b2eb7c211ec0620db0f6b01363ddf525f3",
     "kana_replacements.tsv": "2e943de57bb200bcf854d63d65070e48fd0cb1de3e8c48c62d554e4bd160ef00",
     "kiuzi_map.json": "e11e74bc819d8b23e828c04b20d192789cc9fbd73a307daee21b965213762bc7",

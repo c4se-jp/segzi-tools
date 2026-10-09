@@ -430,8 +430,8 @@ mod tests {
     #[test]
     fn reports_pending_bunka_replacements_that_were_removed_from_ordinary_rules() {
         let converter = Converter::embedded().unwrap();
-        let (_, report) = converter.convert("回復する。回転する。連係する。");
-        for (source, target) in [("回復", "恢復"), ("回転", "廻転"), ("連係", "連繋")] {
+        let (_, report) = converter.convert("回復する。回転する。");
+        for (source, target) in [("回復", "恢復"), ("回転", "廻転")] {
             assert!(
                 report
                     .unresolved_bunka_replacements
