@@ -1,0 +1,1 @@
+{:files {:ignore #{#"(^|.*/)\.delta/worktrees"}}}
