@@ -27,16 +27,31 @@ fn rejects_unknown_arguments_with_usage_status() {
 }
 
 #[test]
-fn fails_on_pending_bunka_replacements_without_changing_the_output() {
+fn fails_on_candidate_bunka_replacements_without_changing_the_output() {
     let output = command()
         .args([
             "--report",
             "none",
             "--fail-on-unresolved",
-            "tests/fixtures/pending-bunka.txt",
+            "tests/fixtures/candidate-bunka.txt",
         ])
         .output()
         .unwrap();
     assert_eq!(output.status.code(), Some(2));
     assert_eq!(String::from_utf8_lossy(&output.stdout), "膨大な資料\n");
+}
+
+#[test]
+fn reports_candidate_bunka_replacements_as_json_without_failing_by_default() {
+    let output = command()
+        .args(["--report", "json", "tests/fixtures/candidate-bunka.txt"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    assert_eq!(String::from_utf8_lossy(&output.stdout), "膨大な資料\n");
+    let report: serde_json::Value = serde_json::from_slice(&output.stderr).unwrap();
+    assert_eq!(
+        report["unresolved_bunka_replacements"],
+        serde_json::json!([{"source": "膨大", "target": "厖大", "count": 1}])
+    );
 }

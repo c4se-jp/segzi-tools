@@ -16,7 +16,7 @@
 
 (def bunka-path (fs/path data-dir "compound_replacements_bunka.tsv"))
 (def ordinary-path (fs/path data-dir "compound_replacements.tsv"))
-(def allowed-kinds #{"safe" "candidate" "pending"})
+(def allowed-kinds #{"safe" "candidate"})
 
 
 (defn rows
@@ -91,10 +91,10 @@
     (empty? (concat duplicates ordinary-overlaps chains))))
 
 
-(defn print-pending-groups
+(defn print-candidate-groups
   [replacements]
   (doseq [[change rows] (->> replacements
-                             (filter #(= "pending" (:kind %)))
+                             (filter #(= "candidate" (:kind %)))
                              (group-by changed-characters)
                              (sort-by (fn [[change rows]]
                                         [(- (count rows)) change])))]
@@ -106,7 +106,7 @@
 (defn main
   []
   (let [replacements (bunka-rows)]
-    (print-pending-groups replacements)
+    (print-candidate-groups replacements)
     (if (report-conflicts replacements) 0 1)))
 
 

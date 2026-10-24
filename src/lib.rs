@@ -39,7 +39,6 @@ pub struct CompoundReplacement {
 enum BunkaReplacementKind {
     Safe,
     Candidate,
-    Pending,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -99,7 +98,6 @@ fn bunka_replacement_rows(input: &str) -> Result<Vec<BunkaReplacement>, String> 
         let kind = match fields.next() {
             Some("safe") => BunkaReplacementKind::Safe,
             Some("candidate") => BunkaReplacementKind::Candidate,
-            Some("pending") => BunkaReplacementKind::Pending,
             Some(kind) => {
                 return Err(format!(
                     "文化廳置換表 {} 行目のkindが不正です: {kind}",
@@ -343,7 +341,23 @@ fn translate(text: &str, map: &BTreeMap<char, String>) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::Converter;
+    use super::{BunkaReplacementKind, Converter, bunka_replacement_rows};
+
+    #[test]
+    fn accepts_only_safe_and_candidate_bunka_replacement_kinds() {
+        let replacements = bunka_replacement_rows(
+            "案分\t按分\tsafe\t自動置換\n膨大\t厖大\tcandidate\t文脈の確認用\n",
+        )
+        .unwrap();
+        assert_eq!(replacements.len(), 2);
+        assert_eq!(replacements[0].kind, BunkaReplacementKind::Safe);
+        assert_eq!(replacements[1].kind, BunkaReplacementKind::Candidate);
+        for kind in ["pending", "unknown"] {
+            let error =
+                bunka_replacement_rows(&format!("膨大\t厖大\t{kind}\t文脈の確認用\n")).unwrap_err();
+            assert!(error.contains(kind));
+        }
+    }
 
     #[test]
     fn converts_embedded_non_boundary_stages() {
@@ -415,7 +429,7 @@ mod tests {
     }
 
     #[test]
-    fn reports_pending_bunka_replacements_without_changing_the_input() {
+    fn reports_candidate_bunka_replacements_without_changing_the_input() {
         let converter = Converter::embedded().unwrap();
         let (text, report) = converter.convert("膨大な資料");
         assert_eq!(text, "膨大な資料");
@@ -428,7 +442,7 @@ mod tests {
     }
 
     #[test]
-    fn reports_pending_bunka_replacements_that_were_removed_from_ordinary_rules() {
+    fn reports_candidate_bunka_replacements_that_were_removed_from_ordinary_rules() {
         let converter = Converter::embedded().unwrap();
         let (_, report) = converter.convert("回復する。回転する。");
         for (source, target) in [("回復", "恢復"), ("回転", "廻転")] {
