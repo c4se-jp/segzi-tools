@@ -42,5 +42,5 @@ test: ## test
 	cargo test
 
 .PHONY: bunka-audit
-bunka-audit: ## 文化廳置換候補を檢討する
+bunka-audit: ## 文化廳置換表の整合性を檢査し、候補を一覽する
 	bb scripts/audit_bunka_replacements.clj
