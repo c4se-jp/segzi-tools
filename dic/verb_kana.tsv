@@ -1,0 +1,34 @@
+# lemma	reading	conjugation	modern_base	historical_base	source
+# UniDic keys use modern kanji; historical_base changes kana only.
+伴う	トモナウ	五段-ワア行	伴う	伴ふ	kana_replacements.tsv
+会う	アウ	五段-ワア行	会う	会ふ	kana_replacements.tsv
+問う	トウ	五段-ワア行	問う	問ふ	kana_replacements.tsv
+奪う	ウバウ	五段-ワア行	奪う	奪ふ	kana_replacements.tsv
+疑う	ウタガウ	五段-ワア行	疑う	疑ふ	kana_replacements.tsv
+抗う	アラガウ	五段-ワア行	抗う	抗ふ	kana_replacements.tsv
+従う	シタガウ	五段-ワア行	従う	従ふ	kana_replacements.tsv
+戦う	タタカウ	五段-ワア行	戦う	戦ふ	kana_replacements.tsv
+扱う	アツカウ	五段-ワア行	扱う	扱ふ	kana_replacements.tsv
+担う	ニナウ	五段-ワア行	担う	担ふ	kana_replacements.tsv
+思う	オモウ	五段-ワア行	思う	思ふ	https://kotobank.jp/word/思う
+買う	カウ	五段-ワア行	買う	買ふ	https://kotobank.jp/word/買う
+行う	オコナウ	五段-ワア行	行う	行ふ	kana_replacements.tsv
+行う	オコナウ	五段-ワア行	行なう	行なふ	kana_replacements.tsv
+言う	イウ	五段-ワア行	言う	言ふ	kana_replacements.tsv
+舞う	マウ	五段-ワア行	舞う	舞ふ	kana_replacements.tsv
+例える	タトエル	下一段-ア行	例える	例へる	kana_replacements.tsv
+備える	ソナエル	下一段-ア行	備える	備へる	kana_replacements.tsv
+加える	クワエル	下一段-ア行	加える	加へる	kana_replacements.tsv
+例える	タトエル	下一段-ア行	喩える	喩へる	kana_replacements.tsv
+押さえる	オサエル	下一段-ア行	抑える	抑へる	kana_replacements.tsv
+捕らえる	トラエル	下一段-ア行	捉える	捉へる	kana_replacements.tsv
+据える	スエル	下一段-ア行	据える	据ゑる	kana_replacements.tsv
+支える	ササエル	下一段-ア行	支える	支へる	kana_replacements.tsv
+教える	オシエル	下一段-ア行	教える	教へる	kana_replacements.tsv
+用いる	モチイル	上一段-ア行	用いる	用ゐる	kana_replacements.tsv
+答える	コタエル	下一段-ア行	答える	答へる	kana_replacements.tsv
+考える	カンガエル	下一段-ア行	考える	考へる	kana_replacements.tsv
+与える	アタエル	下一段-ア行	与える	与へる	kana_replacements.tsv
+例える	タトエル	下一段-ア行	譬える	譬へる	kana_replacements.tsv
+植える	ウエル	下一段-ア行	植える	植ゑる	https://kotobank.jp/word/植える
+伝える	ツタエル	下一段-ア行	伝える	伝へる	https://kotobank.jp/word/伝える
