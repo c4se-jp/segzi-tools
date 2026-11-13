@@ -4,6 +4,9 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::collections::BTreeMap;
 
+mod verb_kana;
+use verb_kana::VerbKana;
+
 #[derive(Debug, Deserialize)]
 struct SegziMap {
     char_map: BTreeMap<String, String>,
@@ -57,6 +60,7 @@ pub struct Converter {
     segmentation_chars: BTreeMap<char, char>,
     kana: Vec<(String, String)>,
     patterns: Vec<(Regex, String)>,
+    verb_kana: VerbKana,
     ambiguous: BTreeMap<char, Vec<String>>,
     segmenter: Segmenter,
 }
@@ -198,6 +202,7 @@ impl Converter {
                         .map_err(|e| e.to_string())
                 })
                 .collect::<Result<_, _>>()?,
+            verb_kana: VerbKana::parse(include_str!("../dic/verb_kana.tsv"))?,
             ambiguous,
             segmenter: Segmenter::new(
                 Mode::Normal,
@@ -239,6 +244,7 @@ impl Converter {
                 text = pieces.concat();
             }
         }
+        text = self.normalize_verb_kana(&text);
         text = translate(&text, &self.chars);
         for (from, to) in &self.kana {
             text = text.replace(from, to);
@@ -302,9 +308,7 @@ impl Converter {
             .collect()
     }
 
-    fn boundaries(&self, text: &str) -> std::collections::BTreeSet<usize> {
-        let mut boundaries: std::collections::BTreeSet<usize> =
-            [0, text.len()].into_iter().collect();
+    fn segmentation_input(&self, text: &str) -> (String, BTreeMap<usize, usize>) {
         let mut segmentation_text = String::with_capacity(text.len());
         let mut source_offsets = BTreeMap::from([(0, 0)]);
         let mut source_offset = 0;
@@ -318,6 +322,40 @@ impl Converter {
             source_offset += character.len_utf8();
             source_offsets.insert(segmentation_text.len(), source_offset);
         }
+        (segmentation_text, source_offsets)
+    }
+
+    fn normalize_verb_kana(&self, text: &str) -> String {
+        let (segmentation_text, source_offsets) = self.segmentation_input(text);
+        let Ok(tokens) = self.segmenter.segment(Cow::Borrowed(&segmentation_text)) else {
+            return text.to_owned();
+        };
+        let mut result = String::with_capacity(text.len());
+        let mut last = 0;
+        for mut token in tokens {
+            let surface = token.surface.to_string();
+            let Some((range, replacement)) = self.verb_kana.replacement(&surface, &token.details())
+            else {
+                continue;
+            };
+            let (Some(&start), Some(&end)) = (
+                source_offsets.get(&(token.byte_start + range.start)),
+                source_offsets.get(&(token.byte_start + range.end)),
+            ) else {
+                continue;
+            };
+            result.push_str(&text[last..start]);
+            result.push_str(replacement);
+            last = end;
+        }
+        result.push_str(&text[last..]);
+        result
+    }
+
+    fn boundaries(&self, text: &str) -> std::collections::BTreeSet<usize> {
+        let mut boundaries: std::collections::BTreeSet<usize> =
+            [0, text.len()].into_iter().collect();
+        let (segmentation_text, source_offsets) = self.segmentation_input(text);
         if let Ok(tokens) = self.segmenter.segment(Cow::Borrowed(&segmentation_text)) {
             for token in tokens {
                 if let Some(source_offset) = source_offsets.get(&token.byte_end) {
@@ -366,6 +404,115 @@ mod tests {
             converter.convert("きょうという日は待っているようです。删除制造干后。");
         assert_eq!(text, "けふといふ日は待ってゐるやうです。削除製造干后。");
         assert_eq!(report.unresolved_ambiguous_characters.len(), 2);
+    }
+
+    #[test]
+    fn normalizes_every_registered_verb_base_without_legacy_replacements() {
+        let converter = Converter::embedded().unwrap();
+        for line in include_str!("../dic/verb_kana.tsv").lines() {
+            if line.starts_with('#') || line.is_empty() {
+                continue;
+            }
+            let fields: Vec<_> = line.split('\t').collect();
+            let source = format!("{}。", fields[3]);
+            let expected = format!("{}。", fields[4]);
+            assert_eq!(converter.normalize_verb_kana(&source), expected, "{source}");
+        }
+    }
+
+    #[test]
+    fn normalizes_godan_forms_and_preserves_onbin() {
+        let converter = Converter::embedded().unwrap();
+        for (source, expected) in [
+            (
+                "思う。思わない。思います。思えば。思え。思おう。",
+                "思ふ。思はない。思ひます。思へば。思へ。思はう。",
+            ),
+            (
+                "買う。買わない。買います。買えば。買え。買おう。",
+                "買ふ。買はない。買ひます。買へば。買へ。買はう。",
+            ),
+            (
+                "思わず。思わぬ。思わん。思われる。思わせる。",
+                "思はず。思はぬ。思はん。思はれる。思はせる。",
+            ),
+            (
+                "思える。思えない。思えます。思えれば。思えよう。",
+                "思へる。思へない。思へます。思へれば。思へよう。",
+            ),
+            (
+                "思った。思って。買った。問うた。問うて。",
+                "思った。思って。買った。問うた。問うて。",
+            ),
+        ] {
+            let actual = converter.normalize_verb_kana(source);
+            assert_eq!(actual, expected, "{source}");
+            assert_eq!(converter.normalize_verb_kana(&actual), actual, "{source}");
+        }
+    }
+
+    #[test]
+    fn normalizes_ichidan_forms_without_changing_the_grammar() {
+        let converter = Converter::embedded().unwrap();
+        for (source, expected) in [
+            (
+                "考える。考えない。考えます。考えれば。考えろ。考えよう。考えた。考えて。",
+                "考へる。考へない。考へます。考へれば。考へろ。考へよう。考へた。考へて。",
+            ),
+            (
+                "植える。植えない。植えます。植えれば。植えろ。植えよう。植えた。",
+                "植ゑる。植ゑない。植ゑます。植ゑれば。植ゑろ。植ゑよう。植ゑた。",
+            ),
+            (
+                "用いる。用いない。用います。用いれば。用いろ。用いよう。用いた。",
+                "用ゐる。用ゐない。用ゐます。用ゐれば。用ゐろ。用ゐよう。用ゐた。",
+            ),
+            (
+                "考えられる。植えられる。用いられる。植えさせる。用いさせる。",
+                "考へられる。植ゑられる。用ゐられる。植ゑさせる。用ゐさせる。",
+            ),
+        ] {
+            let actual = converter.normalize_verb_kana(source);
+            assert_eq!(actual, expected, "{source}");
+            assert_eq!(converter.normalize_verb_kana(&actual), actual, "{source}");
+        }
+    }
+
+    #[test]
+    fn edits_only_kana_in_the_original_text() {
+        let mut converter = Converter::embedded().unwrap();
+        // Exercise unequal UTF-8 lengths in the analysis copy as well.
+        converter.segmentation_chars.insert('成', '成');
+        for (source, expected) in [
+            (
+                "成功を思う。\n  敎える。\t傳える。戰わない。會おう。",
+                "成功を思ふ。\n  敎へる。\t傳へる。戰はない。會はう。",
+            ),
+            (
+                "思ふ。思ひ。思はない。考へる。植ゑる。用ゐる。",
+                "思ふ。思ひ。思はない。考へる。植ゑる。用ゐる。",
+            ),
+            (
+                "思いを伝える。見える。覚える。燃える。増える。絶える。",
+                "思いを伝へる。見える。覚える。燃える。増える。絶える。",
+            ),
+            (
+                "人がいる。弓をいる。豆をいる。おもう。かう。植木。思い出す。",
+                "人がいる。弓をいる。豆をいる。おもう。かう。植木。思い出す。",
+            ),
+            ("考えよ。考えさせる。思い。", "考えよ。考えさせる。思い。"),
+        ] {
+            assert_eq!(converter.normalize_verb_kana(source), expected, "{source}");
+        }
+        assert_eq!(
+            converter.convert("思います。植える。教える。伝える。").0,
+            "思ひます。植ゑる。敎へる。傳へる。"
+        );
+        // The old kana table still handles nominal analyses for compatibility.
+        assert_eq!(
+            converter.convert("考えよ。考えさせる。").0,
+            "考へよ。考へさせる。"
+        );
     }
 
     #[test]
