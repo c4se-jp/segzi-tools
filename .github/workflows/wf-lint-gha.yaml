@@ -24,7 +24,7 @@ jobs:
         with:
           persist-credentials: false
       - name: GitHub Actionsをlint
-        uses: ne-sachirou/lint-gha-reviewdog@27db2b994012175441165bc1bf863606eb89798f # v0.0.10
+        uses: ne-sachirou/lint-gha-reviewdog@7de88fec59e1c9530b7dccd5e9f51594f8b2278b # v0.0.15
         with:
           fail_on_error: true
           github_token: ${{github.token}}
