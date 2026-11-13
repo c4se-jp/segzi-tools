@@ -55,3 +55,33 @@ fn reports_candidate_bunka_replacements_as_json_without_failing_by_default() {
         serde_json::json!([{"source": "膨大", "target": "厖大", "count": 1}])
     );
 }
+
+#[test]
+fn normalizes_verb_kana_through_the_cli() {
+    let output = command()
+        .args(["--report", "none", "tests/fixtures/verb-kana.txt"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    assert_eq!(
+        String::from_utf8_lossy(&output.stdout),
+        include_str!("fixtures/verb-kana-expected.txt")
+    );
+    assert!(output.stderr.is_empty());
+}
+
+#[test]
+fn checks_verb_kana_and_accepts_already_normalized_output() {
+    for (path, status) in [
+        ("tests/fixtures/verb-kana.txt", 1),
+        ("tests/fixtures/verb-kana-expected.txt", 0),
+    ] {
+        let output = command()
+            .args(["--check", "--report", "none", path])
+            .output()
+            .unwrap();
+        assert_eq!(output.status.code(), Some(status), "{path}");
+        assert!(output.stdout.is_empty());
+        assert!(output.stderr.is_empty());
+    }
+}
