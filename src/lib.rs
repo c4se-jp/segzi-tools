@@ -230,7 +230,9 @@ impl Converter {
             let mut last = 0;
             while let Some(found) = start {
                 let end = found + source.len();
-                if boundaries.contains(&found) && boundaries.contains(&end) {
+                // 障害 retains the same meaning inside compounds such as 障害者 and 障害物.
+                if source == "障害" || (boundaries.contains(&found) && boundaries.contains(&end))
+                {
                     pieces.push(&text[last..found]);
                     pieces.push(target);
                     last = end;
@@ -552,6 +554,20 @@ mod tests {
                 .iter()
                 .any(|item| item.source == "案分" && item.target == "按分" && item.count == 1)
         );
+    }
+
+    #[test]
+    fn converts_shougai_inside_compounds() {
+        let converter = Converter::embedded().unwrap();
+        let (text, report) = converter.convert("障害。障害時。障害者。障害物。障害障害。障礙。");
+        assert_eq!(text, "障礙。障礙時。障礙者。障礙物。障礙障礙。障礙。");
+        assert!(
+            !report
+                .boundary_skipped_compound_replacements
+                .iter()
+                .any(|item| item.source == "障害")
+        );
+        assert_eq!(converter.convert(&text).0, text);
     }
 
     #[test]
