@@ -46,7 +46,7 @@ segzify original.txt --output converted.txt --report json --report-output report
 segzify --check original.txt
 ```
 
-曖昧な字、文化廳表の自動置換しない候補（`candidate`）、または語境界のため見送った熟語置換をerrorにするには、`--fail-on-unresolved` を追加します。`candidate` は檢討濟みの分類であり、檢討待ちではありません。入力文脈での採否を利用者が確認するため、`unresolved_bunka_replacements` に報吿します。分類と保守の方針は[文化廳置換表の保守](docs/bunka-replacement-review.md)を參照してください。
+曖昧な字、文化廳表の自動置換しない候補（`candidate`）、または語境界のため見送った熟語置換をerrorにするには、`--fail-on-unresolved` を追加します。熟語が一つの解析語の一部分に當たる場合は、變換せず `boundary_skipped_compound_replacements` に候補を報吿します。熟語の途中に語境界があり、前後のいづれかが語境界と一致しない場合は報吿しません。`candidate` は檢討濟みの分類であり、檢討待ちではありません。入力文脈での採否を利用者が確認するため、`unresolved_bunka_replacements` に報吿します。分類と保守の方針は[文化廳置換表の保守](docs/bunka-replacement-review.md)を參照してください。
 
 この場合の終了statusは 2です。`--check` と同時ならstatusはbitwise ORされます。usage errorは64、input讀取失敗は66、初期化失敗は70、output書込失敗は74です。
 
