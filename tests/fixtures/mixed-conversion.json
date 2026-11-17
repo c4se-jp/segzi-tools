@@ -14,12 +14,6 @@
         "candidates": ["乾", "幹"]
       }
     ],
-    "boundary_skipped_compound_replacements": [
-      {
-        "source": "案分",
-        "target": "按分",
-        "count": 1
-      }
-    ]
+    "boundary_skipped_compound_replacements": []
   }
 }

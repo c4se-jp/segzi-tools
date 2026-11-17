@@ -230,14 +230,14 @@ impl Converter {
             let mut last = 0;
             while let Some(found) = start {
                 let end = found + source.len();
-                // 障害 retains the same meaning inside compounds such as 障害者 and 障害物.
-                if source == "障害" || (boundaries.contains(&found) && boundaries.contains(&end))
-                {
+                if boundaries.contains(&found) && boundaries.contains(&end) {
                     pieces.push(&text[last..found]);
                     pieces.push(target);
                     last = end;
-                } else {
-                    *skipped.entry((source.clone(), target.clone())).or_insert(0) += 1;
+                } else if boundaries.range((found + 1)..end).next().is_none() {
+                    *skipped
+                        .entry((source.clone(), translate(target, &self.chars)))
+                        .or_insert(0) += 1;
                 }
                 start = text[end..].find(source).map(|next| end + next);
             }
@@ -531,15 +531,15 @@ mod tests {
     }
 
     #[test]
-    fn skips_safe_bunka_replacements_inside_another_word() {
+    fn ignores_safe_bunka_replacements_crossing_token_boundaries() {
         let converter = Converter::embedded().unwrap();
         let (text, report) = converter.convert("提案分布。提案分布");
         assert_eq!(text, "提案分布。提案分布");
         assert!(
-            report
+            !report
                 .boundary_skipped_compound_replacements
                 .iter()
-                .any(|item| item.source == "案分" && item.target == "按分" && item.count == 2)
+                .any(|item| item.source == "案分")
         );
     }
 
@@ -549,25 +549,25 @@ mod tests {
         let (text, report) = converter.convert("案分をする。提案分布。");
         assert_eq!(text, "按分をする。提案分布。");
         assert!(
-            report
+            !report
                 .boundary_skipped_compound_replacements
                 .iter()
-                .any(|item| item.source == "案分" && item.target == "按分" && item.count == 1)
+                .any(|item| item.source == "案分")
         );
     }
 
     #[test]
-    fn converts_shougai_inside_compounds() {
+    fn reports_shougai_only_when_contained_in_a_token() {
         let converter = Converter::embedded().unwrap();
-        let (text, report) = converter.convert("障害。障害時。障害者。障害物。障害障害。障礙。");
-        assert_eq!(text, "障礙。障礙時。障礙者。障礙物。障礙障礙。障礙。");
+        let (text, report) = converter.convert("障害\n障害者\n障害物\n障害時\n");
+        assert_eq!(text, "障礙\n障害者\n障害物\n障害時\n");
         assert!(
-            !report
+            report
                 .boundary_skipped_compound_replacements
                 .iter()
-                .any(|item| item.source == "障害")
+                .any(|item| item.source == "障害" && item.target == "障礙" && item.count == 3)
         );
-        assert_eq!(converter.convert(&text).0, text);
+        assert_eq!(converter.convert("障害時").0, "障礙時");
     }
 
     #[test]
