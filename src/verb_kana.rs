@@ -8,6 +8,7 @@ enum Rule {
         modern: char,
         historical: &'static str,
     },
+    Awaseru,
 }
 
 #[derive(Debug)]
@@ -70,6 +71,7 @@ impl VerbKana {
                         historical: "ゐ",
                     },
                 ),
+                "下一段-サ行" => ("わせる", "はせる", Rule::Awaseru),
                 _ => return Err(error()),
             };
             let prefix = modern.strip_suffix(modern_suffix).ok_or_else(error)?;
@@ -143,6 +145,23 @@ impl VerbKana {
                             return Some(edit);
                         }
                     }
+                    Rule::Awaseru => {
+                        if let Some(ending) = tail.strip_prefix('わ')
+                            && ichidan_edit(
+                                entry.prefix.len() + 'わ'.len_utf8(),
+                                ending,
+                                details[5],
+                                'せ',
+                                "せ",
+                            )
+                            .is_some()
+                        {
+                            return Some((
+                                entry.prefix.len()..entry.prefix.len() + 'わ'.len_utf8(),
+                                "は",
+                            ));
+                        }
+                    }
                 }
             }
             // UniDic gives potential forms such as 思える the lemma / lForm
@@ -171,8 +190,10 @@ fn ichidan_edit(
         ("終止形-一般" | "連体形-一般", "る")
         | ("未然形-一般" | "連用形-一般", "")
         | ("仮定形-一般", "れ")
+        | ("仮定形-融合", "りゃ")
+        | ("連体形-撥音便", "ん")
         | ("命令形", "ろ" | "よ")
-        | ("意志推量形", "よう") => {
+        | ("意志推量形", "よう" | "よっ") => {
             Some((prefix_len..prefix_len + modern.len_utf8(), historical))
         }
         _ => None,
@@ -191,9 +212,12 @@ mod tests {
             ("未然形-一般", ""),
             ("連用形-一般", ""),
             ("仮定形-一般", "れ"),
+            ("仮定形-融合", "りゃ"),
+            ("連体形-撥音便", "ん"),
             ("命令形", "ろ"),
             ("命令形", "よ"),
             ("意志推量形", "よう"),
+            ("意志推量形", "よっ"),
         ] {
             for (modern, historical) in [('え', "へ"), ('え', "ゑ"), ('い', "ゐ")] {
                 let tail = format!("{modern}{ending}");
@@ -205,6 +229,48 @@ mod tests {
         }
         assert!(ichidan_edit(3, "へる", "終止形-一般", 'え', "へ").is_none());
         assert!(ichidan_edit(3, "えった", "連用形-促音便", 'え', "へ").is_none());
+    }
+
+    #[test]
+    fn edits_internal_kana_in_registered_s_ichidan_forms() {
+        let rules =
+            VerbKana::parse("仮わせる\tカワセル\t下一段-サ行\t仮わせる\t仮はせる\tsource\n")
+                .unwrap();
+        let mut details = [
+            "動詞",
+            "一般",
+            "*",
+            "*",
+            "下一段-サ行",
+            "終止形-一般",
+            "カワセル",
+            "仮わせる",
+            "仮わせる",
+            "カワセル",
+            "仮わせる",
+        ];
+        for (form, surface) in [
+            ("終止形-一般", "仮わせる"),
+            ("連体形-一般", "仮わせる"),
+            ("未然形-一般", "仮わせ"),
+            ("連用形-一般", "仮わせ"),
+            ("仮定形-一般", "仮わせれ"),
+            ("仮定形-融合", "仮わせりゃ"),
+            ("連体形-撥音便", "仮わせん"),
+            ("命令形", "仮わせろ"),
+            ("意志推量形", "仮わせよう"),
+            ("意志推量形", "仮わせよっ"),
+        ] {
+            details[5] = form;
+            assert_eq!(rules.replacement(surface, &details), Some((3..6, "は")));
+        }
+        details[5] = "連用形-一般";
+        assert_eq!(rules.replacement("仮わせ", &details), Some((3..6, "は")));
+        details[0] = "名詞";
+        assert_eq!(rules.replacement("仮わせ", &details), None);
+        details[0] = "動詞";
+        details[5] = "意志推量形";
+        assert_eq!(rules.replacement("仮はせよう", &details), None);
     }
 
     #[test]
