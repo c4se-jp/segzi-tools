@@ -227,6 +227,42 @@ mod tests {
     }
 
     #[test]
+    fn edits_internal_kana_in_registered_s_ichidan_forms() {
+        let rules =
+            VerbKana::parse("仮わせる\tカワセル\t下一段-サ行\t仮わせる\t仮はせる\tsource\n")
+                .unwrap();
+        let mut details = [
+            "動詞",
+            "一般",
+            "*",
+            "*",
+            "下一段-サ行",
+            "終止形-一般",
+            "カワセル",
+            "仮わせる",
+            "仮わせる",
+            "カワセル",
+            "仮わせる",
+        ];
+        for (form, surface) in [
+            ("終止形-一般", "仮わせる"),
+            ("連体形-一般", "仮わせる"),
+            ("未然形-一般", "仮わせ"),
+            ("連用形-一般", "仮わせ"),
+            ("仮定形-一般", "仮わせれ"),
+            ("命令形", "仮わせろ"),
+            ("意志推量形", "仮わせよう"),
+        ] {
+            details[5] = form;
+            assert_eq!(rules.replacement(surface, &details), Some((3..6, "は")));
+        }
+        details[0] = "名詞";
+        assert_eq!(rules.replacement("仮わせ", &details), None);
+        details[0] = "動詞";
+        assert_eq!(rules.replacement("仮はせよう", &details), None);
+    }
+
+    #[test]
     fn rejects_inconsistent_or_ambiguous_dictionary_rows() {
         let valid = "思う\tオモウ\t五段-ワア行\t思う\t思ふ\tsource\n";
         assert!(VerbKana::parse(valid).is_ok());

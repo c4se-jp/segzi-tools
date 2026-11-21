@@ -481,30 +481,6 @@ mod tests {
     }
 
     #[test]
-    fn normalizes_registered_awaseru_verbs() {
-        let converter = Converter::embedded().unwrap();
-        for (source, expected) in [
-            (
-                "機能的ゲノム解析を三角測量的に組み合わせることで、",
-                "機能的ゲノム解析を三角測量的に組み合はせることで、",
-            ),
-            (
-                "組み合わせる。組み合わせます。組み合わせた。",
-                "組み合はせる。組み合はせます。組み合はせた。",
-            ),
-            (
-                "手を合わせる。手を合わせて。",
-                "手を合はせる。手を合はせて。",
-            ),
-            ("組み合わせ。合わせ技。", "組み合わせ。合わせ技。"),
-        ] {
-            let actual = converter.normalize_verb_kana(source);
-            assert_eq!(actual, expected, "{source}");
-            assert_eq!(converter.normalize_verb_kana(&actual), actual, "{source}");
-        }
-    }
-
-    #[test]
     fn edits_only_kana_in_the_original_text() {
         let mut converter = Converter::embedded().unwrap();
         // Exercise unequal UTF-8 lengths in the analysis copy as well.
