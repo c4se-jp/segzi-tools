@@ -190,8 +190,10 @@ fn ichidan_edit(
         ("終止形-一般" | "連体形-一般", "る")
         | ("未然形-一般" | "連用形-一般", "")
         | ("仮定形-一般", "れ")
+        | ("仮定形-融合", "りゃ")
+        | ("連体形-撥音便", "ん")
         | ("命令形", "ろ" | "よ")
-        | ("意志推量形", "よう") => {
+        | ("意志推量形", "よう" | "よっ") => {
             Some((prefix_len..prefix_len + modern.len_utf8(), historical))
         }
         _ => None,
@@ -210,9 +212,12 @@ mod tests {
             ("未然形-一般", ""),
             ("連用形-一般", ""),
             ("仮定形-一般", "れ"),
+            ("仮定形-融合", "りゃ"),
+            ("連体形-撥音便", "ん"),
             ("命令形", "ろ"),
             ("命令形", "よ"),
             ("意志推量形", "よう"),
+            ("意志推量形", "よっ"),
         ] {
             for (modern, historical) in [('え', "へ"), ('え', "ゑ"), ('い', "ゐ")] {
                 let tail = format!("{modern}{ending}");
@@ -250,15 +255,21 @@ mod tests {
             ("未然形-一般", "仮わせ"),
             ("連用形-一般", "仮わせ"),
             ("仮定形-一般", "仮わせれ"),
+            ("仮定形-融合", "仮わせりゃ"),
+            ("連体形-撥音便", "仮わせん"),
             ("命令形", "仮わせろ"),
             ("意志推量形", "仮わせよう"),
+            ("意志推量形", "仮わせよっ"),
         ] {
             details[5] = form;
             assert_eq!(rules.replacement(surface, &details), Some((3..6, "は")));
         }
+        details[5] = "連用形-一般";
+        assert_eq!(rules.replacement("仮わせ", &details), Some((3..6, "は")));
         details[0] = "名詞";
         assert_eq!(rules.replacement("仮わせ", &details), None);
         details[0] = "動詞";
+        details[5] = "意志推量形";
         assert_eq!(rules.replacement("仮はせよう", &details), None);
     }
 
