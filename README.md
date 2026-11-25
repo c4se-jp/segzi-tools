@@ -10,6 +10,8 @@
 
 登錄された動詞は活用形も正規化します。「思います → 思ひます」「植える → 植ゑる」などを扱ひ、音便は保存します。對象範圍とdataの保守方法は[動詞の活用と正かなづかひ](docs/verb-kana.md)を參照してください。
 
+變換の順序、語境界の扱ひ、報吿と限界は[正字・正かなづかひ變換のalgorithm](docs/conversion-algorithm.md)を參照してください。
+
 ### 導入
 
 Rust 1.98.1以降を用意して、Git repositoryからinstallできます。
@@ -46,7 +48,7 @@ segzify original.txt --output converted.txt --report json --report-output report
 segzify --check original.txt
 ```
 
-曖昧な字、文化廳表の自動置換しない候補（`candidate`）、または語境界のため見送った熟語置換をerrorにするには、`--fail-on-unresolved` を追加します。熟語が一つの解析語の一部分に當たる場合は、變換せず `boundary_skipped_compound_replacements` に候補を報吿します。熟語の途中に語境界があり、前後のいづれかが語境界と一致しない場合は報吿しません。`candidate` は檢討濟みの分類であり、檢討待ちではありません。入力文脈での採否を利用者が確認するため、`unresolved_bunka_replacements` に報吿します。分類と保守の方針は[文化廳置換表の保守](docs/bunka-replacement-review.md)を參照してください。
+曖昧な字、文化廳「同音の漢字による書きかへ」に由來する自動置換しない候補（`candidate`）、または語境界のため見送った熟語置換をerrorにするには、`--fail-on-unresolved` を追加します。熟語が一つの解析語の一部分に當たる場合は、變換せず `boundary_skipped_compound_replacements` に候補を報吿します。熟語の途中に語境界があり、前後のいづれかが語境界と一致しない場合は報吿しません。`candidate` は檢討濟みの分類であり、檢討待ちではありません。入力文脈での採否を利用者が確認するため、`unresolved_bunka_replacements` に報吿します。分類と保守の方針は[文化廳置換表の保守](docs/bunka-replacement-review.md)を參照してください。
 
 この場合の終了statusは 2です。`--check` と同時ならstatusはbitwise ORされます。usage errorは64、input讀取失敗は66、初期化失敗は70、output書込失敗は74です。
 
