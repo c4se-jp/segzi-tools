@@ -1,4 +1,5 @@
 use std::{
+    fs,
     io::Write,
     process::{Command, Stdio},
 };
@@ -57,6 +58,27 @@ fn text_report_is_available_on_request() {
         .unwrap();
     assert!(output.status.success());
     assert!(String::from_utf8_lossy(&output.stderr).starts_with("Report {"));
+}
+
+#[test]
+fn report_output_alone_writes_a_text_report() {
+    let path = std::env::temp_dir().join(format!("segzify-report-{}.txt", std::process::id()));
+    let output = command()
+        .arg("--report-output")
+        .arg(&path)
+        .arg("tests/fixtures/candidate-bunka.txt")
+        .output()
+        .unwrap();
+    let report = fs::read_to_string(&path);
+    let _ = fs::remove_file(&path);
+
+    assert!(output.status.success());
+    assert_eq!(String::from_utf8_lossy(&output.stdout), "膨大な資料\n");
+    assert!(output.stderr.is_empty());
+    let report = report.unwrap();
+    assert!(report.starts_with("Report {"));
+    assert!(report.contains("unresolved_bunka_replacements"));
+    assert!(report.contains("膨大"));
 }
 
 #[test]
