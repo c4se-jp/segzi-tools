@@ -1,4 +1,7 @@
-use std::process::Command;
+use std::{
+    io::Write,
+    process::{Command, Stdio},
+};
 
 fn command() -> Command {
     Command::new(env!("CARGO_BIN_EXE_segzify"))
@@ -24,6 +27,36 @@ fn rejects_check_with_output() {
 fn rejects_unknown_arguments_with_usage_status() {
     let output = command().arg("--bogus").output().unwrap();
     assert_eq!(output.status.code(), Some(64));
+}
+
+#[test]
+fn stdin_conversion_is_quiet_by_default() {
+    let mut child = command()
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    child
+        .stdin
+        .take()
+        .unwrap()
+        .write_all("国語を学ぶ\n".as_bytes())
+        .unwrap();
+    let output = child.wait_with_output().unwrap();
+    assert!(output.status.success());
+    assert_eq!(String::from_utf8_lossy(&output.stdout), "國語を學ぶ\n");
+    assert!(output.stderr.is_empty());
+}
+
+#[test]
+fn text_report_is_available_on_request() {
+    let output = command()
+        .args(["--report", "text", "tests/fixtures/candidate-bunka.txt"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).starts_with("Report {"));
 }
 
 #[test]

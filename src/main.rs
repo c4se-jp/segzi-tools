@@ -19,8 +19,8 @@ struct Args {
     input: Option<PathBuf>,
     #[arg(short, long, conflicts_with = "check")]
     output: Option<PathBuf>,
-    #[arg(long, value_enum, default_value = "text")]
-    report: ReportFormat,
+    #[arg(long, value_enum)]
+    report: Option<ReportFormat>,
     #[arg(long)]
     report_output: Option<PathBuf>,
     #[arg(long)]
@@ -60,7 +60,12 @@ fn main() -> ExitCode {
         eprintln!("outputを書き込めません");
         return ExitCode::from(74);
     }
-    let rendered = match args.report {
+    let format = args.report.unwrap_or(if args.report_output.is_some() {
+        ReportFormat::Text
+    } else {
+        ReportFormat::None
+    });
+    let rendered = match format {
         ReportFormat::Json => Some(serde_json::to_string_pretty(&report).unwrap() + "\n"),
         ReportFormat::Text => Some(format!("{report:#?}\n")),
         ReportFormat::None => None,
