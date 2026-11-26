@@ -17,6 +17,9 @@
 行う	オコナウ	五段-ワア行	行う	行ふ	kana_replacements.tsv
 行う	オコナウ	五段-ワア行	行なう	行なふ	kana_replacements.tsv
 言う	イウ	五段-ワア行	言う	言ふ	kana_replacements.tsv
+言う	イウ	五段-ワア行	謂う	謂ふ	https://kotobank.jp/word/言う
+言う	イウ	五段-ワア行	云う	云ふ	https://kotobank.jp/word/言う
+現われる	アラワレル	下一段-ラ行	顕われる	顕はれる	https://kotobank.jp/word/現れる
 舞う	マウ	五段-ワア行	舞う	舞ふ	kana_replacements.tsv
 例える	タトエル	下一段-ア行	例える	例へる	kana_replacements.tsv
 備える	ソナエル	下一段-ア行	備える	備へる	kana_replacements.tsv

@@ -409,6 +409,16 @@ mod tests {
     }
 
     #[test]
+    fn normalizes_requested_verb_spellings() {
+        let converter = Converter::embedded().unwrap();
+        let source = "謂う。謂わない。謂います。云う。云わない。云います。顕われる。顯われない。顕われた。言う。教える。敎える。";
+        let expected = "謂ふ。謂はない。謂ひます。云ふ。云はない。云ひます。顯はれる。顯はれない。顯はれた。言ふ。敎へる。敎へる。";
+        let actual = converter.convert(source).0;
+        assert_eq!(actual, expected);
+        assert_eq!(converter.convert(&actual).0, actual);
+    }
+
+    #[test]
     fn normalizes_every_registered_verb_base_without_legacy_replacements() {
         let converter = Converter::embedded().unwrap();
         for line in include_str!("../dic/verb_kana.tsv").lines() {
