@@ -30,13 +30,15 @@ source packageに含めるfilesとrelease版實行fileの容量を測定する�
 
 ### 使用法
 
-標準入力から讀み、變換結果を標準出力へ書きます。reportは標準errorへ書きます。
+標準入力から讀み、變換結果を標準出力へ書きます。reportは既定では出力せず、`--report text` 又は `--report json` を指定すると標準errorへ書きます。
 
 ```sh
 printf '国語を学ぶ\n' | segzify
 ```
 
-input/output fileを指定する例:
+Vimでは `:%!segzify` で變換できます。
+
+input/output fileとreportの出力先を指定する例（`--report-output` のみを指定した場合はtext形式です）:
 
 ```sh
 segzify original.txt --output converted.txt --report json --report-output report.json
