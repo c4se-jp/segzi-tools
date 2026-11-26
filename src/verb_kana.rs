@@ -8,7 +8,9 @@ enum Rule {
         modern: char,
         historical: &'static str,
     },
-    Awaseru,
+    InternalWa {
+        ending: char,
+    },
 }
 
 #[derive(Debug)]
@@ -71,7 +73,8 @@ impl VerbKana {
                         historical: "ゐ",
                     },
                 ),
-                "下一段-サ行" => ("わせる", "はせる", Rule::Awaseru),
+                "下一段-サ行" => ("わせる", "はせる", Rule::InternalWa { ending: 'せ' }),
+                "下一段-ラ行" => ("われる", "はれる", Rule::InternalWa { ending: 'れ' }),
                 _ => return Err(error()),
             };
             let prefix = modern.strip_suffix(modern_suffix).ok_or_else(error)?;
@@ -145,14 +148,14 @@ impl VerbKana {
                             return Some(edit);
                         }
                     }
-                    Rule::Awaseru => {
+                    Rule::InternalWa { ending: stem } => {
                         if let Some(ending) = tail.strip_prefix('わ')
                             && ichidan_edit(
                                 entry.prefix.len() + 'わ'.len_utf8(),
                                 ending,
                                 details[5],
-                                'せ',
-                                "せ",
+                                stem,
+                                "",
                             )
                             .is_some()
                         {
